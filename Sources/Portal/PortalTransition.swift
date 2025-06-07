@@ -1,5 +1,10 @@
 import SwiftUI
 
+public enum portalLayer{
+//    case root
+    case above
+}
+
 /// Drives the Portal floating layer for a given identifiable `item`.
 ///
 /// Use this view modifier to trigger and control a portal transition
@@ -266,6 +271,7 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
     public let animation: Animation
     public let animationDuration: TimeInterval
     public let delay: TimeInterval
+    private let layer: portalLayer = .above
     public let layerView: () -> LayerView
     public let completion: (Bool) -> Void
     
@@ -296,16 +302,26 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
         self.completion = completion
     }
     
+    // Helper to get the correct index based on layer
     private func findPortalInfoIndex() -> Int? {
-        portalModel.info.firstIndex { $0.infoID == id }
+        switch layer {
+        case .above:
+            return portalModel.info.firstIndex { $0.infoID == id }
+//        case .root:
+//            return portalModel.rootInfo.firstIndex { $0.infoID == id }
+        }
     }
     
     public func body(content: Content) -> some View {
         content
             .onAppear {
-                if !portalModel.info.contains(where: { $0.infoID == id }) {
+                // Registration logic
+                if !portalModel.info.contains(where: { $0.infoID == id }) && layer == .above {
                     portalModel.info.append(PortalInfo(id: id))
                 }
+//                if !portalModel.rootInfo.contains(where: { $0.infoID == id }) && layer == .root {
+//                    portalModel.rootInfo.append(PortalInfo(id: id))
+//                }
             }
             .onChange(of: isActive) { oldValue, newValue in
                 // Find index using helper
@@ -313,8 +329,18 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
                 
                 // Get the correct array based on layer
                 var portalInfoArray: [PortalInfo] {
-                    get { portalModel.info }
-                    set { portalModel.info = newValue }
+                    get {
+                        switch layer {
+                        case .above: return portalModel.info
+//                        case .root: return portalModel.rootInfo
+                        }
+                    }
+                    set {
+                        switch layer {
+                        case .above: portalModel.info = newValue
+//                        case .root: portalModel.rootInfo = newValue
+                        }
+                    }
                 }
                 
                 // Update common properties
