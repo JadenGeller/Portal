@@ -49,7 +49,10 @@ public struct Portal<Content: View>: View {
         MainActor.assumeIsolated {
             if let idx = index, portalModel.info[idx].initalized {
                 if source {
-                    portalModel.info[idx].sourceAnchor = prefs[key]
+                    if portalModel.info[idx].sourceAnchor == nil  {
+                        portalModel.info[idx].sourceAnchor = prefs[key]
+                    }
+                    
                 } else {
                     portalModel.info[idx].destinationAnchor = prefs[key]
                 }
