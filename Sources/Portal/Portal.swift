@@ -54,7 +54,9 @@ public struct Portal<Content: View>: View {
                     }
                     
                 } else {
-                    portalModel.info[idx].destinationAnchor = prefs[key]
+                    if portalModel.info[idx].destinationAnchor == nil {
+                        portalModel.info[idx].destinationAnchor = prefs[key]
+                    }
                 }
             }
         }
