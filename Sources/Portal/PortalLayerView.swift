@@ -58,46 +58,7 @@ fileprivate struct PortalLayerContentView: View {
     
     /// Binding to the portal animation data, allowing direct state modifications.
     @Binding var info: PortalInfo
-    
-    /// Handles changes to the animation state and manages the animation lifecycle.
-    ///
-    /// This method is called whenever the `animateView` flag changes, triggering either
-    /// the start of cleanup phase of the animation. It uses a delayed execution to allow
-    /// the animation to complete before performing cleanup operations.
-    ///
-    /// **Timing Logic:**
-    /// - Waits for `animationDuration + 0.25` seconds to ensure animation completion
-    /// - Additional 0.25s buffer provides time for any easing curve completion
-    ///
-    /// **State Management:**
-    /// - When animation ends (`value == false`): Performs complete cleanup and reset
-    /// - When animation starts (`value == true`): Sets up destination view visibility
-    ///
-    /// - Parameter value: The new value of `info.animateView`
-    private func onChangeAnimateView(oldValue: Bool, newValue: Bool) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + info.animationDuration + 0.25) {
-            if !newValue {
-                // Animation completed or cancelled - perform full cleanup
-                info.initalized = false          // Mark portal as uninitialized
-                info.layerView = nil            // Remove the transition layer
-                info.sourceAnchor = nil         // Clear source position data
-                info.destinationAnchor = nil    // Clear destination position data
-                info.sourceProgress = 0         // Reset source animation progress
-                info.destinationProgress = 0    // Reset destination animation progress
-                info.completion(false)          // Notify completion with failure status
-            } else {
-                // Animation started - prepare destination view
-                info.hideView = true           // Hide destination view during transition
-                info.completion(true)          // Notify completion with success status
-            }
-        }
-    }
-    
-    var body: some View {
-        layer
-//            .onChange(of: info.animateView, onChangeAnimateView)
-    }
-    
+
     /// Builds the animated layer view that transitions between source and destination.
     ///
     /// This computed property creates the visual layer that users see during the portal
@@ -119,8 +80,7 @@ fileprivate struct PortalLayerContentView: View {
     /// - Uses `proxy[anchor]` to convert anchor bounds to global coordinates
     /// - Positions layer using `.offset()` for precise placement
     /// - Uses `.frame()` for size animation
-    @ViewBuilder
-    private var layer: some View {
+    var body: some View {
         if let source = info.sourceAnchor,
            let destination = info.destinationAnchor,
            let layer = info.layerView,
