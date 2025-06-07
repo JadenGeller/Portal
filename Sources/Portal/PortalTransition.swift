@@ -227,8 +227,8 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
                 portalInfoArray[idx].layerView = AnyView(layerView())
                 
                 if newValue {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
-                        withAnimation(animation.delay(delay), completionCriteria: .removed) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                        withAnimation(animation, completionCriteria: .removed) {
                             portalInfoArray[idx].animateView = true
                         } completion: {
                             portalInfoArray[idx].hideView = true
