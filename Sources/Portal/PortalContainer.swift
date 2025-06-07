@@ -21,7 +21,7 @@ import UIKit
 public struct PortalContainer<Content: View>: View {
     @ViewBuilder public var content: Content
     @Environment(\.scenePhase) private var scene
-    @StateObject private var portalModel = CrossModel()
+    @State private var portalModel = CrossModel()
     private let hideStatusBar: Bool
     
     /// Creates a new PortalContainer.
@@ -48,7 +48,7 @@ public struct PortalContainer<Content: View>: View {
             .onChangeCompat(of: scene) { newValue in
                 setupWindow(newValue)
             }
-            .environmentObject(portalModel)
+            .environment(portalModel)
     }
     
     private func setupWindow(_ scenePhase: ScenePhase) {
@@ -118,12 +118,12 @@ final class OverlayWindowManager {
                 if hideStatusBar {
                     root = HiddenStatusHostingController(
                         rootView: PortalLayerView()
-                            .environmentObject(portalModel)
+                            .environment(portalModel)
                     )
                 } else {
                     root = UIHostingController(
                         rootView: PortalLayerView()
-                            .environmentObject(portalModel)
+                            .environment(portalModel)
                     )
                 }
                 root.view.backgroundColor = .clear

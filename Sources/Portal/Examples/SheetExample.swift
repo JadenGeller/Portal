@@ -259,7 +259,7 @@ public struct Portal_SheetExample: View {
 }
 
 struct AnimatedLayer<Content: View>: View {
-    @EnvironmentObject private var portalModel: CrossModel
+    @Environment(CrossModel.self) private var portalModel
     let id: String
     @ViewBuilder let content: () -> Content
     

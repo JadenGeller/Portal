@@ -204,7 +204,7 @@ public struct Portal_CardsExample: View {
 }
 
 struct AnimatedGradient<Content: View>: View {
-    @EnvironmentObject private var portalModel: CrossModel
+    @Environment(CrossModel.self) private var portalModel
     public var item: CardInfo?
     @ViewBuilder let content: () -> Content
     

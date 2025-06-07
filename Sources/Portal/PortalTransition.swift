@@ -112,7 +112,7 @@ public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: Vi
     public let layerView: (Item) -> LayerView
     public let completion: (Bool) -> Void
 
-    @EnvironmentObject private var portalModel: CrossModel
+    @Environment(CrossModel.self) private var portalModel
 
     /// Compute a unique key from the item's `id`
     private var key: String? {
@@ -275,7 +275,7 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
     public let layerView: () -> LayerView
     public let completion: (Bool) -> Void
     
-    @EnvironmentObject private var portalModel: CrossModel
+    @Environment(CrossModel.self) private var portalModel
     
     // Initializer uses Binding<Bool>
     public init(

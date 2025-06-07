@@ -2,9 +2,10 @@ import SwiftUI
 
 /// Internal overlay view that renders and animates portal layers
 internal struct PortalLayerView: View {
-    @EnvironmentObject private var portalModel: CrossModel
+    @Environment(CrossModel.self) private var portalModel
 
     var body: some View {
+        @Bindable var portalModel = portalModel
         GeometryReader { proxy in
             ForEach($portalModel.info) { $info in
                 ZStack {

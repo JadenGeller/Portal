@@ -9,10 +9,11 @@ import SwiftUI
 /// - Parameters:
 ///   - id: A unique string identifier for this portal destination. This should match the `id` used for the corresponding portal source and transition.
 ///   - content: The view content to be marked as the destination.
+
 public struct PortalDestination<Content: View>: View {
     public let id: String
     @ViewBuilder public let content: Content
-    @EnvironmentObject private var portalModel: CrossModel
+    @Environment(CrossModel.self) private var portalModel
     
     public init(id: String, @ViewBuilder content: () -> Content) {
         self.id = id

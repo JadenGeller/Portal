@@ -12,7 +12,7 @@ import SwiftUI
 public struct PortalSource<Content: View>: View {
     public let id: String
     @ViewBuilder public let content: Content
-    @EnvironmentObject private var portalModel: CrossModel
+    @Environment(CrossModel.self) private var portalModel
     
     public init(id: String, @ViewBuilder content: () -> Content) {
         self.id = id
