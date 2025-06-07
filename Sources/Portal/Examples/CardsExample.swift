@@ -225,7 +225,7 @@ struct AnimatedGradient<Content: View>: View {
                 // Ensure scale is correct on appear
                 layerScale = 1
             }
-            .onChangeCompat(of: isActive) { newValue in
+            .onChange(of: isActive) { oldValue, newValue in
                 if newValue {
                     // 1) bump up
                     withAnimation(animationExample) {

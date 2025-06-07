@@ -39,15 +39,9 @@ public struct PortalContainer<Content: View>: View {
     
     public var body: some View {
         content
-            .onAppear {
-                setupWindow(scene)
-            }
-            .onDisappear() {
-                OverlayWindowManager.shared.removeOverlayWindow()
-            }
-            .onChangeCompat(of: scene) { newValue in
-                setupWindow(newValue)
-            }
+            .onAppear { setupWindow(scene) }
+            .onDisappear(perform: OverlayWindowManager.shared.removeOverlayWindow)
+            .onChange(of: scene) { _, new in setupWindow (new) }
             .environment(portalModel)
     }
     

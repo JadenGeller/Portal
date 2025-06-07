@@ -145,7 +145,7 @@ public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: Vi
     public func body(content: Content) -> some View {
         content
             // React only when `item` changes from nil→non‑nil or vice versa
-            .onChangeCompat(of: item != nil) { hasValue in
+            .onChange(of: item != nil) { oldValue, hasValue in
                         if hasValue {
                             print("item active")
                             // item just became non‑nil → activate
@@ -323,7 +323,7 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
 //                    portalModel.rootInfo.append(PortalInfo(id: id))
 //                }
             }
-            .onChangeCompat(of: isActive) { newValue in
+            .onChange(of: isActive) { oldValue, newValue in
                 // Find index using helper
                 guard let idx = findPortalInfoIndex() else { return }
                 
