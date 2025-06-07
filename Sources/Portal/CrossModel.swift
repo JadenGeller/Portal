@@ -106,10 +106,14 @@ public class CrossModel {
     ///   - prefs: Dictionary containing the updated anchor preferences
     func preferenceChangePerform(for id: String, source: Bool, prefs: [String: Anchor<CGRect>]) {
         MainActor.assumeIsolated {
-            if let idx = getIndex(for: id),
-               info[idx].initalized,
-               info[idx].sourceAnchor == nil {
-                info[idx].sourceAnchor = prefs[getKey(for: id, source: source)]
+            guard let idx = getIndex(for: id), info[idx].initalized else { return }
+            switch source {
+            case true:
+                if info[idx].sourceAnchor != nil {
+                    info[idx].sourceAnchor = prefs[getKey(for: id, source: source)]
+                }
+            case false:
+                info[idx].destinationAnchor = prefs[getKey(for: id, source: source)]
             }
         }
     }
