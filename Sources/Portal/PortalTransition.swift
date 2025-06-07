@@ -372,19 +372,6 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
                         portalInfoArray[idx].completion(false)
                     }
                 }
-                
-//                if newValue {
-//                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-//                        withAnimation(animation) {
-//                            portalInfoArray[idx].animateView = true
-//                        }
-//                    }
-//                } else {
-//                    portalInfoArray[idx].hideView = false
-//                    withAnimation(animation) {
-//                        portalInfoArray[idx].animateView = false
-//                    }
-//                }
             }
     }
 }
