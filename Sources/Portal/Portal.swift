@@ -33,21 +33,50 @@ public struct Portal<Content: View>: View {
     /// - Parameter anchor: The anchor bounds to transform
     /// - Returns: A dictionary mapping portal IDs to their anchor bounds
     private func anchorPreferenceTransform(anchor: Anchor<CGRect>) -> [String: Anchor<CGRect>] {
-        portalModel.anchorPreferenceTransform(for: id, source: source, anchor: anchor)
+        var result: [String: Anchor<CGRect>] = [:]
+        MainActor.assumeIsolated {
+            if let idx = index, portalModel.info[idx].initalized {
+                result = [key: anchor]
+            }
+        }
+        return result
     }
     
     /// Handles preference changes for this portal.
     ///
     /// - Parameter prefs: The updated preference dictionary containing anchor bounds
     private func preferenceChangePerform(prefs: [String: Anchor<CGRect>]) {
-        portalModel.preferenceChangePerform(for: id, source: source, prefs: prefs)
+        MainActor.assumeIsolated {
+            if let idx = index, portalModel.info[idx].initalized {
+                if source {
+                    portalModel.info[idx].sourceAnchor = prefs[key]
+                } else {
+                    portalModel.info[idx].destinationAnchor = prefs[key]
+                }
+            }
+        }
     }
     
     public var body: some View {
         content
-            .opacity(portalModel.getOpacity(for: id, source: source))
+            .opacity(opacity)
             .anchorPreference(key: AnchorKey.self, value: .bounds, transform: anchorPreferenceTransform)
             .onPreferenceChange(AnchorKey.self, perform: preferenceChangePerform)
+    }
+    
+    private var key: String { source ? id : "\(id)DEST" }
+    
+    private var opacity: CGFloat {
+        guard let idx = index else { return 1 }
+        if source {
+            return portalModel.info[idx].destinationAnchor == nil ? 1 : 0
+        } else {
+            return portalModel.info[idx].initalized ? (portalModel.info[idx].hideView ? 1 : 0) : 1
+        }
+    }
+    
+    private var index: Int? {
+        portalModel.info.firstIndex { $0.infoID == id }
     }
 }
 
