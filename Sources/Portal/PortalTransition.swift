@@ -1,10 +1,5 @@
 import SwiftUI
 
-public enum portalLayer{
-//    case root
-    case above
-}
-
 /// Drives the Portal floating layer for a given identifiable `item`.
 ///
 /// Use this view modifier to trigger and control a portal transition
@@ -271,7 +266,6 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
     public let animation: Animation
     public let animationDuration: TimeInterval
     public let delay: TimeInterval
-    private let layer: portalLayer = .above
     public let layerView: () -> LayerView
     public let completion: (Bool) -> Void
     
@@ -302,26 +296,16 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
         self.completion = completion
     }
     
-    // Helper to get the correct index based on layer
     private func findPortalInfoIndex() -> Int? {
-        switch layer {
-        case .above:
-            return portalModel.info.firstIndex { $0.infoID == id }
-//        case .root:
-//            return portalModel.rootInfo.firstIndex { $0.infoID == id }
-        }
+        portalModel.info.firstIndex { $0.infoID == id }
     }
     
     public func body(content: Content) -> some View {
         content
             .onAppear {
-                // Registration logic
-                if !portalModel.info.contains(where: { $0.infoID == id }) && layer == .above {
+                if !portalModel.info.contains(where: { $0.infoID == id }) {
                     portalModel.info.append(PortalInfo(id: id))
                 }
-//                if !portalModel.rootInfo.contains(where: { $0.infoID == id }) && layer == .root {
-//                    portalModel.rootInfo.append(PortalInfo(id: id))
-//                }
             }
             .onChange(of: isActive) { oldValue, newValue in
                 // Find index using helper
@@ -329,18 +313,8 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
                 
                 // Get the correct array based on layer
                 var portalInfoArray: [PortalInfo] {
-                    get {
-                        switch layer {
-                        case .above: return portalModel.info
-//                        case .root: return portalModel.rootInfo
-                        }
-                    }
-                    set {
-                        switch layer {
-                        case .above: portalModel.info = newValue
-//                        case .root: portalModel.rootInfo = newValue
-                        }
-                    }
+                    get { portalModel.info }
+                    set { portalModel.info = newValue }
                 }
                 
                 // Update common properties
@@ -379,107 +353,6 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
 
 @available(iOS 15.0, macOS 13.0, *)
 public extension View {
-    
-    /// Drives a portal animation triggered by a boolean state.
-    ///
-    /// Attach this modifier to a container view to drive a portal transition between
-    /// a source view (marked with `.portalSource`) and a destination view (marked with
-    /// `.portalDestination`). The modifier manages the floating overlay, animation,
-    /// and transition state for the specified `id` based on the `isActive` binding.
-    ///
-    /// The entire view hierarchy involved in the transition should be wrapped in a `PortalContainer`.
-    ///
-    /// - Parameters:
-    ///   - id: A unique string identifier for the portal transition. Must match the `id` used for the corresponding portal source and destination.
-    ///   - isActive: A `Binding<Bool>` that triggers the transition. `true` activates the transition, `false` deactivates it.
-    ///   - sourceProgress: The progress value representing the source state (default: 0).
-    ///   - destinationProgress: The progress value representing the destination state (default: 0).
-    ///   - animation: The animation to use for the transition (default: `.smooth(duration: 0.42, extraBounce: 0.2)`).
-    ///   - animationDuration: The duration of the transition animation (default: 0.72).
-    ///   - delay: A delay before the animation starts after the trigger changes (default: 0.06).
-    ///   - layer: Specifies the rendering layer for the transition (e.g., `.above`, `.root`). Default is `.above`.
-    ///   - layerView: A closure returning the `View` content to be animated during the transition (the floating layer). This closure takes no arguments.
-    ///   - completion: An optional closure called when the transition animation finishes. The `Bool` indicates the final state (`true` for active, `false` for inactive).
-    ///
-    ///Example usage (Transitioning into a Sheet with Boolean):
-    /// ```swift
-    /// // 1. Define the Sheet Content View
-    /// struct SettingsSheetView: View {
-    ///     @Binding var showSheet: Bool // To allow dismissing from within
-    ///     let portalID: String
-    ///
-    ///     var body: some View {
-    ///         NavigationView { // Optional: For title/toolbar
-    ///             VStack {
-    ///                 HStack {
-    ///                     Image(systemName: "gearshape.fill")
-    ///                         .font(.largeTitle)
-    ///                         // 1a. Mark the destination inside the sheet
-    ///                         .portalDestination(id: portalID)
-    ///                     Text("Settings")
-    ///                         .font(.largeTitle)
-    ///                 }
-    ///                 .padding(.top, 40)
-    ///
-    ///                 // ... other settings content ...
-    ///                 Spacer()
-    ///             }
-    ///             .toolbar {
-    ///                 ToolbarItem(placement: .navigationBarLeading) {
-    ///                     Button("Done") { showSheet = false } // Dismiss sheet
-    ///                 }
-    ///             }
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // 2. Define the Main View
-    /// struct ContentView: View {
-    ///     @State private var showSettingsSheet: Bool = false
-    ///     let portalID = "settingsIconTransition"
-    ///
-    ///     var body: some View {
-    ///         // 2a. Wrap in PortalContainer
-    ///         PortalContainer {
-    ///             VStack {
-    ///                 HStack {
-    ///                     Spacer()
-    ///                     // 2b. Source View
-    ///                     Image(systemName: "gearshape.fill")
-    ///                         .font(.title)
-    ///                         .padding()
-    ///                         .portalSource(id: portalID) // Mark source
-    ///                         .onTapGesture {
-    ///                             showSettingsSheet = true // Trigger sheet & transition
-    ///                         }
-    ///                 }
-    ///                 Spacer() // Main content area
-    ///                 Text("Main Content")
-    ///                 Spacer()
-    ///             }
-    ///             .padding()
-    ///             // 2c. Apply the sheet modifier using the boolean binding
-    ///             .sheet(isPresented: $showSettingsSheet) {
-    ///                 SettingsSheetView(
-    ///                     showSheet: $showSettingsSheet,
-    ///                     portalID: portalID
-    ///                 )
-    ///             }
-    ///             // 2d. Apply the portal transition modifier
-    ///             .portalTransition(
-    ///                 id: portalID,                   // Same ID
-    ///                 isActive: $showSettingsSheet,   // Boolean binding
-    ///                 animation: .smooth(duration: 0.5),
-    ///                 animationDuration: 0.5
-    ///             ) {
-    ///                 // 2e. Define the floating layer (what animates)
-    ///                 Image(systemName: "gearshape.fill")
-    ///                     .font(.title) // Match source/destination styling
-    ///             }
-    ///         }
-    ///     }
-    /// }
-    /// ```
     func portalTransition<LayerView: View>(
         id: String,
         isActive: Binding<Bool>,
@@ -507,110 +380,6 @@ public extension View {
             )
         )
     }
-    
-    /// Drives the Portal floating layer for a given id, triggered by an optional identifiable item.
-    ///
-    /// Use this view modifier to trigger and control a portal transition animation between
-    /// a source view (marked with `.portalSource`) and a destination view (marked with
-    /// `.portalDestination`), often across different view hierarchies like sheets or
-    /// navigation links. The transition activates based on the presence of an identifiable item.
-    ///
-    /// This follows the standard SwiftUI pattern requiring the item to be `Identifiable`.
-    /// The entire view hierarchy involved in the transition should be wrapped in a `PortalContainer`.
-    ///
-    /// - Parameters:
-    ///   - id: A unique string identifier for the portal transition. This must match the `id` used for the corresponding `.portalSource` and `.portalDestination`.
-    ///   - item: A `Binding<Optional<Item>>` where `Item` conforms to `Identifiable`. The transition activates when this binding contains a value and deactivates when it's `nil`.
-    ///   - sourceProgress: The progress value representing the source state (default: 0).
-    ///   - destinationProgress: The progress value representing the destination state (default: 0).
-    ///   - animation: The animation to use for the transition (default: `.smooth(duration: 0.42, extraBounce: 0.2)`).
-    ///   - animationDuration: The duration of the transition animation (default: 0.72).
-    ///   - delay: A delay before the animation starts after the item becomes non-nil (default: 0.06).
-    ///   - layer: Specifies the rendering layer for the transition (e.g., `.above`, `.root`). Default is `.above`.
-    ///   - layerView: A closure that receives the unwrapped `Item` and returns the `View` content to be animated during the transition (the floating layer).
-    ///   - completion: An optional closure called when the transition animation finishes. The `Bool` indicates the final state (`true` for active/item present, `false` for inactive/item nil).
-    ///
-    /// Example usage (Transitioning into a Sheet):
-    /// ```swift
-    /// // 1. Define your identifiable item
-    /// struct Book: Identifiable {
-    ///     let id = UUID() // Conforms to Identifiable
-    ///     let title: String
-    ///     let coverImageName: String
-    /// }
-    ///
-    /// // 2. Define the Detail View (presented in the sheet)
-    /// struct BookDetailView: View {
-    ///     let book: Book
-    ///     let portalID: String // To link the destination
-    ///
-    ///     var body: some View {
-    ///         VStack {
-    ///             Image(book.coverImageName)
-    ///                 .resizable()
-    ///                 .scaledToFit()
-    ///                 .frame(height: 300)
-    ///                 .clipShape(RoundedRectangle(cornerRadius: 8))
-    ///                 // 2a. Mark the destination view inside the sheet
-    ///                 .portalDestination(id: portalID)
-    ///
-    ///             Text(book.title).font(.title)
-    ///             // ... other details ...
-    ///             Spacer()
-    ///         }
-    ///         .padding()
-    ///     }
-    /// }
-    ///
-    /// // 3. Define the Main View (List)
-    /// struct LibraryView: View {
-    ///     @State private var selectedBook: Book?
-    ///     let books: [Book] = [ /* ... your array of books ... */ ]
-    ///     let portalID = "bookCoverTransition" // Shared ID for source, dest, transition
-    ///
-    ///     var body: some View {
-    ///         // 3a. Wrap the relevant hierarchy in a PortalContainer
-    ///         PortalContainer {
-    ///             ScrollView {
-    ///                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
-    ///                     ForEach(books) { book in
-    ///                         Image(book.coverImageName)
-    ///                             .resizable()
-    ///                             .scaledToFit()
-    ///                             .frame(height: 150)
-    ///                             .clipShape(RoundedRectangle(cornerRadius: 4))
-    ///                             // 3b. Mark the source view in the list
-    ///                             .portalSource(id: portalID)
-    ///                             .onTapGesture {
-    ///                                 selectedBook = book // Trigger sheet & transition
-    ///                             }
-    ///                     }
-    ///                 }
-    ///                 .padding()
-    ///             }
-    ///             // 3c. Apply the sheet modifier using the item binding
-    ///             .sheet(item: $selectedBook) { book in
-    ///                 // Present the detail view when selectedBook is not nil
-    ///                 BookDetailView(book: book, portalID: portalID)
-    ///             }
-    ///             // 3d. Apply the portal transition modifier to drive the animation
-    ///             .portalTransition(
-    ///                 id: portalID,               // Same ID as source/destination
-    ///                 item: $selectedBook,        // Binding to the optional item
-    ///                 animation: .smooth(duration: 0.6),
-    ///                 animationDuration: 0.6
-    ///             ) { book in
-    ///                 // 3e. Define the floating layer view (what actually animates)
-    ///                 Image(book.coverImageName)
-    ///                     .resizable()
-    ///                     .scaledToFit()
-    ///                     // Match styling of source/destination for seamlessness
-    ///                     .clipShape(RoundedRectangle(cornerRadius: 4)) // Match list item corner
-    ///             }
-    ///         }
-    ///     }
-    /// }
-    /// ```
     func portalTransition<Item: Identifiable, LayerView: View>(
             item: Binding<Optional<Item>>,
             sourceProgress: CGFloat = 0,
