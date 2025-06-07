@@ -351,40 +351,40 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
                 portalInfoArray[idx].completion = completion
                 portalInfoArray[idx].layerView = AnyView(layerView())
                 
-//                if newValue {
-//                    withAnimation(animation.delay(delay), completionCriteria: .removed) {
-//                        portalInfoArray[idx].animateView = true
-//                    } completion: {
-//                        portalInfoArray[idx].hideView = true
-//                        portalInfoArray[idx].completion(true)
-//                    }
-//                } else {
-//                    portalInfoArray[idx].hideView = false
-//                    withAnimation(animation, completionCriteria: .removed) {
-//                        portalInfoArray[idx].animateView = false
-//                    } completion: {
-//                        portalInfoArray[idx].initalized = false          // Mark portal as uninitialized
-//                        portalInfoArray[idx].layerView = nil            // Remove the transition layer
-//                        portalInfoArray[idx].sourceAnchor = nil         // Clear source position data
-//                        portalInfoArray[idx].destinationAnchor = nil    // Clear destination position data
-//                        portalInfoArray[idx].sourceProgress = 0         // Reset source animation progress
-//                        portalInfoArray[idx].destinationProgress = 0    // Reset destination animation progress
-//                        portalInfoArray[idx].completion(false)
-//                    }
-//                }
-                
                 if newValue {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                        withAnimation(animation) {
-                            portalInfoArray[idx].animateView = true
-                        }
+                    withAnimation(animation.delay(delay), completionCriteria: .removed) {
+                        portalInfoArray[idx].animateView = true
+                    } completion: {
+                        portalInfoArray[idx].hideView = true
+                        portalInfoArray[idx].completion(true)
                     }
                 } else {
                     portalInfoArray[idx].hideView = false
-                    withAnimation(animation) {
+                    withAnimation(animation, completionCriteria: .removed) {
                         portalInfoArray[idx].animateView = false
+                    } completion: {
+                        portalInfoArray[idx].initalized = false          // Mark portal as uninitialized
+                        portalInfoArray[idx].layerView = nil            // Remove the transition layer
+                        portalInfoArray[idx].sourceAnchor = nil         // Clear source position data
+                        portalInfoArray[idx].destinationAnchor = nil    // Clear destination position data
+                        portalInfoArray[idx].sourceProgress = 0         // Reset source animation progress
+                        portalInfoArray[idx].destinationProgress = 0    // Reset destination animation progress
+                        portalInfoArray[idx].completion(false)
                     }
                 }
+                
+//                if newValue {
+//                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+//                        withAnimation(animation) {
+//                            portalInfoArray[idx].animateView = true
+//                        }
+//                    }
+//                } else {
+//                    portalInfoArray[idx].hideView = false
+//                    withAnimation(animation) {
+//                        portalInfoArray[idx].animateView = false
+//                    }
+//                }
             }
     }
 }
