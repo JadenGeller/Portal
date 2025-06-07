@@ -48,13 +48,10 @@ public struct PortalContainer<Content: View>: View {
     private func setupWindow(_ scenePhase: ScenePhase) {
 #if canImport(UIKit)
         if scenePhase == .active {
-            print("add overlay")
-            OverlayWindowManager.shared.addOverlayWindow(
-                with: portalModel,
-                hideStatusBar: hideStatusBar
-            )
+//            print("add overlay")
+            OverlayWindowManager.shared.addOverlayWindow(with: portalModel, hideStatusBar: hideStatusBar)
         } else {
-            print("remove overlay")
+//            print("remove overlay")
             OverlayWindowManager.shared.removeOverlayWindow()
         }
 #endif
@@ -126,7 +123,7 @@ final class OverlayWindowManager {
                 window.rootViewController = root
                 guard self.overlayWindow == nil else {
                     
-                        print("overlayWindow populated, return")
+//                        print("overlayWindow populated, return")
                     return }
                 self.overlayWindow = window
                 break
@@ -141,11 +138,5 @@ final class OverlayWindowManager {
             self.overlayWindow = nil
         }
     }
-}
-
-/// A HostingController that always hides the status bar.
-final class HiddenStatusHostingController<Content: View>: UIHostingController<Content> {
-    override var prefersStatusBarHidden: Bool { true }
-    override var preferredStatusBarUpdateAnimation: UIStatusBarAnimation { .slide }
 }
 #endif

@@ -94,7 +94,8 @@ fileprivate struct PortalLayerContentView: View {
     }
     
     var body: some View {
-        layer.onChange(of: info.animateView, onChangeAnimateView)
+        layer
+//            .onChange(of: info.animateView, onChangeAnimateView)
     }
     
     /// Builds the animated layer view that transitions between source and destination.
