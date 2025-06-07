@@ -48,15 +48,10 @@ public struct Portal<Content: View>: View {
     private func preferenceChangePerform(prefs: [String: Anchor<CGRect>]) {
         MainActor.assumeIsolated {
             if let idx = index, portalModel.info[idx].initalized {
-                if source {
-                    if portalModel.info[idx].sourceAnchor == nil  {
-                        portalModel.info[idx].sourceAnchor = prefs[key]
-                    }
-                    
-                } else {
-                    if portalModel.info[idx].destinationAnchor == nil {
-                        portalModel.info[idx].destinationAnchor = prefs[key]
-                    }
+                if !source {
+                    portalModel.info[idx].destinationAnchor = prefs[key]
+                } else if portalModel.info[idx].sourceAnchor == nil {
+                    portalModel.info[idx].sourceAnchor = prefs[key]
                 }
             }
         }
