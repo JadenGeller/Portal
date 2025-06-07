@@ -45,12 +45,6 @@ public struct PortalInfo: Identifiable {
     /// and determines whether the intermediate layer view should be displayed.
     public var animateView = false
     
-    /// Duration of the portal transition animation in seconds.
-    ///
-    /// Controls how long the animation takes to complete from start to finish.
-    /// Default value of 0.55 seconds provides a smooth, responsive feel for most transitions.
-    public var animationDuration: TimeInterval = 0.55
-    
     /// Flag controlling the visibility of the destination view during animation.
     ///
     /// When `true`, the destination view is hidden (opacity 0), typically during the
@@ -71,18 +65,6 @@ public struct PortalInfo: Identifiable {
     /// needed for calculating the ending position of the portal animation.
     /// Set when the destination view reports its position through the preference system.
     public var destinationAnchor: Anchor<CGRect>? = nil
-    
-    /// Animation progress value for the source view transition (0.0 to 1.0).
-    ///
-    /// Tracks how far along the source view's part of the animation has progressed.
-    /// 0.0 represents the start state, 1.0 represents completion of the source transition.
-    public var sourceProgress: CGFloat = 0
-    
-    /// Animation progress value for the destination view transition (0.0 to 1.0).
-    ///
-    /// Tracks how far along the destination view's part of the animation has progressed.
-    /// 0.0 represents the start state, 1.0 represents completion of the destination transition.
-    public var destinationProgress: CGFloat = 0
     
     /// Completion callback executed when the portal animation finishes.
     ///

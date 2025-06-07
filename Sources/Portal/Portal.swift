@@ -100,6 +100,37 @@ public extension View {
         Portal(id: id, source: true) { self }
     }
     
+    /// Marks this view as a portal source using an `Identifiable` item's ID.
+    ///
+    /// This convenience method automatically extracts the string representation of an `Identifiable`
+    /// item's ID to use as the portal identifier. This is particularly useful when working with
+    /// data models that conform to `Identifiable`, as it ensures consistent ID usage across
+    /// source and destination views without manual string conversion.
+    ///
+    /// The method converts the item's ID to a string using string interpolation, which works
+    /// for most common ID types including `UUID`, `Int`, `String`, and custom types with
+    /// proper string representations.
+    ///
+    /// - Parameter item: An `Identifiable` item whose ID will be used as the portal identifier.
+    ///   The string representation of `item.id` will be used as the portal key.
+    ///
+    /// Example usage:
+    /// ```swift
+    /// struct Book: Identifiable {
+    ///     let id = UUID()
+    ///     let title: String
+    /// }
+    ///
+    /// let book = Book(title: "SwiftUI Guide")
+    ///
+    /// Image("cover")
+    ///     .portalSource(item: book)  // Uses book.id automatically
+    /// ```
+    func portalSource<Item: Identifiable>(item: Item) -> some View {
+        let key = "\(item.id)"
+        return self.portalSource(id: key)
+    }
+    
     /// Marks this view as a portal destination (arriving view).
     ///
     /// Attach this modifier to the view that should act as the destination for a portal transition.
@@ -115,5 +146,44 @@ public extension View {
     /// ```
     func portalDestination(id: String) -> some View {
         Portal(id: id, source: false) { self }
+    }
+    
+    /// Marks this view as a portal destination using an `Identifiable` item's ID.
+    ///
+    /// This convenience method automatically extracts the string representation of an `Identifiable`
+    /// item's ID to use as the portal identifier. This ensures perfect ID matching between source
+    /// and destination views when working with the same data model, eliminating the risk of
+    /// ID mismatches that could prevent portal animations from working correctly.
+    ///
+    /// The method is designed to work seamlessly with the corresponding `portalSource(item:)` method,
+    /// ensuring that both source and destination views use identical string representations of the
+    /// same item's ID.
+    ///
+    /// - Parameter item: An `Identifiable` item whose ID will be used as the portal identifier.
+    ///   The string representation of `item.id` must match the ID used in the corresponding source view.
+    ///
+    /// Example usage:
+    /// ```swift
+    /// struct Book: Identifiable {
+    ///     let id = UUID()
+    ///     let title: String
+    /// }
+    ///
+    /// let book = Book(title: "SwiftUI Guide")
+    ///
+    /// // In source view
+    /// Image("thumbnail")
+    ///     .portalSource(item: book)
+    ///
+    /// // In destination view (same book instance)
+    /// Image("fullsize")
+    ///     .portalDestination(item: book)  // Automatically matches source ID
+    /// ```
+    ///
+    /// **Important:** Both source and destination views must use the same `Identifiable` item
+    /// instance (or items with identical IDs) for the portal animation to work correctly.
+    func portalDestination<Item: Identifiable>(item: Item) -> some View {
+        let key = "\(item.id)"
+        return self.portalDestination(id: key)
     }
 }

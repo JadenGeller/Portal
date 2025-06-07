@@ -43,7 +43,7 @@ public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: Vi
 
     public func body(content: Content) -> some View {
         content
-            // React only when `item` changes from nil→non‑nil or vice versa
+//             React only when `item` changes from nil→non‑nil or vice versa
             .onChange(of: item != nil) { oldValue, hasValue in
                         if hasValue {
                             print("item active")
@@ -60,9 +60,6 @@ public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: Vi
                             print("configuring..")
                             // configure
                             portalModel.info[idx].initalized = true
-                            portalModel.info[idx].animationDuration  = animationDuration
-                            portalModel.info[idx].sourceProgress     = sourceProgress
-                            portalModel.info[idx].destinationProgress = destinationProgress
                             portalModel.info[idx].completion         = completion
                             portalModel.info[idx].layerView          = AnyView(layerView(unwrapped))
                             // fire the animation
@@ -163,162 +160,121 @@ public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: Vi
 /// ```
 @available(iOS 15.0, macOS 13.0, *)
 internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifier {
+    @Environment(CrossModel.self) private var portalModel
+    
     public let id: String
+    public let config: PortalAnimationConfig
+    
     @Binding public var isActive: Bool
-    public let sourceProgress: CGFloat
-    public let destinationProgress: CGFloat
-    public let animation: Animation
-    public let animationDuration: TimeInterval
-    public let delay: TimeInterval
+    
     public let layerView: () -> LayerView
     public let completion: (Bool) -> Void
     
-    @Environment(CrossModel.self) private var portalModel
-    
-    // Initializer uses Binding<Bool>
     public init(
         id: String,
-        isActive: Binding<Bool>, // Boolean binding
-        sourceProgress: CGFloat = 0,
-        destinationProgress: CGFloat = 0,
-        animation: Animation = .bouncy(duration: 0.3),
-        animationDuration: TimeInterval = 0.3,
-        delay: TimeInterval = 0.06,
-        layerView: @escaping () -> LayerView, // No-argument closure
-        completion: @escaping (Bool) -> Void = { _ in }
+        config: PortalAnimationConfig,
+        isActive: Binding<Bool>,
+        layerView: @escaping () -> LayerView,
+        completion: @escaping (Bool) -> Void
     ) {
         self.id = id
+        self.config = config
         self._isActive = isActive
-        self.sourceProgress = sourceProgress
-        self.destinationProgress = destinationProgress
-        self.animation = animation
-        self.animationDuration = animationDuration
-        self.delay = delay
-//        self.layer = layer
         self.layerView = layerView
         self.completion = completion
     }
     
-    // Helper to get the correct index based on layer
-    private func findPortalInfoIndex() -> Int? {
-        portalModel.info.firstIndex { $0.infoID == id }
+    private func onAppear() {
+        if !portalModel.info.contains(where: { $0.infoID == id }) {
+            portalModel.info.append(PortalInfo(id: id))
+        }
+    }
+    
+    private func onChange(oldValue: Bool, newValue: Bool) {
+        guard let idx = portalModel.info.firstIndex(where: { $0.infoID == id }) else { return }
+        
+        var portalInfoArray: [PortalInfo] {
+            get { portalModel.info }
+            set { portalModel.info = newValue }
+        }
+        
+        portalInfoArray[idx].initalized = true
+        portalInfoArray[idx].completion = completion
+        portalInfoArray[idx].layerView = AnyView(layerView())
+        
+        if newValue {
+            DispatchQueue.main.asyncAfter(deadline: .now() + config.source.delay) {
+                withAnimation(config.source.animation, completionCriteria: config.source.completionCriteria) {
+                    portalInfoArray[idx].animateView = true
+                } completion: {
+                    portalInfoArray[idx].hideView = true
+                    portalInfoArray[idx].completion(true)
+                    config.source.completion()
+                }
+            }
+            
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + config.destination.delay)  {
+                portalInfoArray[idx].hideView = false
+                withAnimation(config.destination.animation, completionCriteria: config.destination.completionCriteria) {
+                    portalInfoArray[idx].animateView = false
+                } completion: {
+                    portalInfoArray[idx].initalized = false
+                    portalInfoArray[idx].layerView = nil
+                    portalInfoArray[idx].sourceAnchor = nil
+                    portalInfoArray[idx].destinationAnchor = nil
+                    portalInfoArray[idx].completion(false)
+                    config.destination.completion()
+                }
+            }
+        }
     }
     
     public func body(content: Content) -> some View {
         content
-            .onAppear {
-                if !portalModel.info.contains(where: { $0.infoID == id }) {
-                    portalModel.info.append(PortalInfo(id: id))
-                }
-            }
-            .onChange(of: isActive) { oldValue, newValue in
-                guard let idx = findPortalInfoIndex() else { return }
-                
-                var portalInfoArray: [PortalInfo] {
-                    get { portalModel.info }
-                    set { portalModel.info = newValue }
-                }
-                
-                portalInfoArray[idx].initalized = true
-                portalInfoArray[idx].animationDuration = animationDuration
-                portalInfoArray[idx].sourceProgress = sourceProgress
-                portalInfoArray[idx].destinationProgress = destinationProgress
-                portalInfoArray[idx].completion = completion
-                portalInfoArray[idx].layerView = AnyView(layerView())
-                
-                if newValue {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                        withAnimation(animation, completionCriteria: .removed) {
-                            portalInfoArray[idx].animateView = true
-                        } completion: {
-                            portalInfoArray[idx].hideView = true
-                            portalInfoArray[idx].completion(true)
-                        }
-                    }
-                    
-                } else {
-                    portalInfoArray[idx].hideView = false
-                    withAnimation(animation, completionCriteria: .removed) {
-                        portalInfoArray[idx].animateView = false
-                    } completion: {
-                        portalInfoArray[idx].initalized = false
-                        portalInfoArray[idx].layerView = nil
-                        portalInfoArray[idx].sourceAnchor = nil
-                        portalInfoArray[idx].destinationAnchor = nil
-                        portalInfoArray[idx].sourceProgress = 0
-                        portalInfoArray[idx].destinationProgress = 0
-                        portalInfoArray[idx].completion(false)
-                    }
-                }
-            }
+            .onAppear(perform: onAppear)
+            .onChange(of: isActive, onChange)
     }
 }
 
-
-@available(iOS 15.0, macOS 13.0, *)
 public extension View {
     func portalTransition<LayerView: View>(
         id: String,
+        config: PortalAnimationConfig = .init(),
         isActive: Binding<Bool>,
-        sourceProgress: CGFloat = 0,
-        destinationProgress: CGFloat = 0,
-        animation: Animation = .smooth(duration: 0.42, extraBounce: 0.2),
-        animationDuration: TimeInterval = 0.72,
-        delay: TimeInterval = 0.06,
         @ViewBuilder layerView: @escaping () -> LayerView,
         completion: @escaping (Bool) -> Void = { _ in }
     ) -> some View {
         self.modifier(
             ConditionalPortalTransitionModifier(
                 id: id,
+                config: config,
                 isActive: isActive,
+                layerView: layerView,
+                completion: completion))
+    }
+    
+    func portalTransition<Item: Identifiable, LayerView: View>(
+        item: Binding<Optional<Item>>,
+        sourceProgress: CGFloat = 0,
+        destinationProgress: CGFloat = 0,
+        animation: Animation = .smooth(duration: 0.42, extraBounce: 0.2),
+        animationDuration: TimeInterval = 0.72,
+        delay: TimeInterval = 0.06,
+        @ViewBuilder layerView: @escaping (Item) -> LayerView,
+        completion: @escaping (Bool) -> Void = { _ in }
+    ) -> some View {
+        self.modifier(
+            OptionalPortalTransitionModifier(
+                item: item,
                 sourceProgress: sourceProgress,
                 destinationProgress: destinationProgress,
                 animation: animation,
                 animationDuration: animationDuration,
                 delay: delay,
-//                layer: layer,
                 layerView: layerView,
                 completion: completion
             )
         )
     }
-    
-    func portalTransition<Item: Identifiable, LayerView: View>(
-            item: Binding<Optional<Item>>,
-            sourceProgress: CGFloat = 0,
-            destinationProgress: CGFloat = 0,
-            animation: Animation = .smooth(duration: 0.42, extraBounce: 0.2),
-            animationDuration: TimeInterval = 0.72,
-            delay: TimeInterval = 0.06,
-            @ViewBuilder layerView: @escaping (Item) -> LayerView,
-            completion: @escaping (Bool) -> Void = { _ in }
-        ) -> some View {
-            self.modifier(
-                OptionalPortalTransitionModifier(
-                    item: item,
-                    sourceProgress: sourceProgress,
-                    destinationProgress: destinationProgress,
-                    animation: animation,
-                    animationDuration: animationDuration,
-                    delay: delay,
-                    layerView: layerView,
-                    completion: completion
-                )
-            )
-        }
-}
-
-public extension View {
-  /// Marks this view as a portal source for an Identifiable `item`.
-  func portalSource<Item: Identifiable>(item: Item) -> some View {
-    let key = "\(item.id)"
-    return self.portalSource(id: key)
-  }
-
-  /// Marks this view as a portal destination for an Identifiable `item`.
-  func portalDestination<Item: Identifiable>(item: Item) -> some View {
-    let key = "\(item.id)"
-    return self.portalDestination(id: key)
-  }
 }
