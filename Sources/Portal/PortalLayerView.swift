@@ -2,10 +2,11 @@ import SwiftUI
 
 /// Internal overlay view that renders and animates portal layers
 internal struct PortalLayerView: View {
-    @EnvironmentObject private var portalModel: CrossModel
+    @Environment(CrossModel.self) private var portalModel
 
     var body: some View {
         GeometryReader { proxy in
+            @Bindable var portalModel = portalModel
             ForEach($portalModel.info) { $info in
                 ZStack {
                     if let source = info.sourceAnchor,
@@ -26,7 +27,7 @@ internal struct PortalLayerView: View {
                             .transition(.identity)
                     }
                 }
-                .onChangeCompat(of: info.animateView) { newValue in
+                .onChange(of: info.animateView) { newValue in
                     // Delay to allow animation to finish
                     DispatchQueue.main.asyncAfter(deadline: .now() + info.animationDuration + 0.25) {
                         if !newValue {
