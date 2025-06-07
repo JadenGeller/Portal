@@ -120,28 +120,30 @@ fileprivate struct PortalLayerContentView: View {
     /// - Uses `.frame()` for size animation
     @ViewBuilder
     private var layer: some View {
-        if let source = info.sourceAnchor,
-           let destination = info.destinationAnchor,
-           let layer = info.layerView,
-           !info.hideView {
-            
-            // Convert anchor bounds to concrete rectangles in global coordinate space
-            let sRect = proxy[source]
-            let dRect = proxy[destination]
-            let animate = info.animateView
-            
-            // Interpolate size between source and destination based on animation state
-            let width = animate ? dRect.size.width : sRect.size.width
-            let height = animate ? dRect.size.height : sRect.size.height
-            
-            // Interpolate position between source and destination based on animation state
-            let x = animate ? dRect.minX : sRect.minX
-            let y = animate ? dRect.minY : sRect.minY
-            
-            layer
-                .frame(width: width, height: height)
-                .offset(x: x, y: y)
-                .transition(.identity)  // Prevents additional SwiftUI transitions
+        ZStack {
+            if let source = info.sourceAnchor,
+               let destination = info.destinationAnchor,
+               let layer = info.layerView,
+               !info.hideView {
+                
+                // Convert anchor bounds to concrete rectangles in global coordinate space
+                let sRect = proxy[source]
+                let dRect = proxy[destination]
+                let animate = info.animateView
+                
+                // Interpolate size between source and destination based on animation state
+                let width = animate ? dRect.size.width : sRect.size.width
+                let height = animate ? dRect.size.height : sRect.size.height
+                
+                // Interpolate position between source and destination based on animation state
+                let x = animate ? dRect.minX : sRect.minX
+                let y = animate ? dRect.minY : sRect.minY
+                
+                layer
+                    .frame(width: width, height: height)
+                    .offset(x: x, y: y)
+                    .transition(.identity)  // Prevents additional SwiftUI transitions
+            }
         }
     }
 }
