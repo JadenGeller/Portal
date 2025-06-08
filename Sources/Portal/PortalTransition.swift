@@ -4,7 +4,7 @@ import SwiftUI
 public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: View>: ViewModifier {
     @Binding public var item: Item?
     
-    public let config: PortalAnimationConfig
+    public let config: PortalTransitionConfig
     
     public let layerView: (Item) -> LayerView
     public let completion: (Bool) -> Void
@@ -15,7 +15,7 @@ public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: Vi
     
     public init(
         item: Binding<Item?>,
-        config: PortalAnimationConfig,
+        config: PortalTransitionConfig,
         layerView: @escaping (Item) -> LayerView,
         completion: @escaping (Bool) -> Void
     ) {
@@ -43,36 +43,34 @@ public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: Vi
         guard let idx = portalModel.info.firstIndex(where: { $0.infoID == key }) else { return }
         
         portalModel.info[idx].initalized = true
+        portalModel.info[idx].animation = config.animation
+        portalModel.info[idx].corners = config.corners
         portalModel.info[idx].completion = completion
         portalModel.info[idx].layerView = AnyView(layerView(unwrapped))
         
         
         if hasValue {
-            DispatchQueue.main.asyncAfter(deadline: .now() + config.source.delay) {
-                withAnimation(config.source.animation, completionCriteria: config.source.completionCriteria) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + config.animation.delay) {
+                withAnimation(config.animation.value, completionCriteria: config.animation.completionCriteria) {
                     portalModel.info[idx].animateView = true
                 } completion: {
                     portalModel.info[idx].hideView = true
                     portalModel.info[idx].completion(true)
-                    config.source.completion()
                 }
             }
         } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + config.destination.delay)  {
-                portalModel.info[idx].hideView = false
-                withAnimation(config.destination.animation, completionCriteria: config.destination.completionCriteria) {
-                    portalModel.info[idx].animateView = false
-                } completion: {
-                    portalModel.info[idx].initalized = false
-                    portalModel.info[idx].layerView = nil
-                    portalModel.info[idx].sourceAnchor = nil
-                    portalModel.info[idx].destinationAnchor = nil
-                    portalModel.info[idx].completion(false)
-                    config.destination.completion()
-                }
-                
-                lastKey = nil
+            portalModel.info[idx].hideView = false
+            withAnimation(config.animation.value, completionCriteria: config.animation.completionCriteria) {
+                portalModel.info[idx].animateView = false
+            } completion: {
+                portalModel.info[idx].initalized = false
+                portalModel.info[idx].layerView = nil
+                portalModel.info[idx].sourceAnchor = nil
+                portalModel.info[idx].destinationAnchor = nil
+                portalModel.info[idx].completion(false)
             }
+            
+            lastKey = nil
         }
     }
     
@@ -161,7 +159,7 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
     @Environment(CrossModel.self) private var portalModel
     
     public let id: String
-    public let config: PortalAnimationConfig
+    public let config: PortalTransitionConfig
     
     @Binding public var isActive: Bool
     
@@ -170,7 +168,7 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
     
     public init(
         id: String,
-        config: PortalAnimationConfig,
+        config: PortalTransitionConfig,
         isActive: Binding<Bool>,
         layerView: @escaping () -> LayerView,
         completion: @escaping (Bool) -> Void
@@ -192,25 +190,24 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
         guard let idx = portalModel.info.firstIndex(where: { $0.infoID == id }) else { return }
         
         portalModel.info[idx].initalized = true
+        portalModel.info[idx].animation = config.animation
+        portalModel.info[idx].corners = config.corners
         portalModel.info[idx].completion = completion
         portalModel.info[idx].layerView = AnyView(layerView())
         
         if newValue {
-            DispatchQueue.main.asyncAfter(deadline: .now() + config.source.delay) {
-                withAnimation(config.source.animation, completionCriteria: config.source.completionCriteria) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + config.animation.delay) {
+                withAnimation(config.animation.value, completionCriteria: config.animation.completionCriteria) {
                     portalModel.info[idx].animateView = true
                 } completion: {
                     portalModel.info[idx].hideView = true
                     portalModel.info[idx].completion(true)
-                    config.source.completion()
                 }
             }
             
         } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + config.destination.delay) {
-                portalModel.info[idx].hideView = false
-            }
-            withAnimation(config.destination.animation.delay(config.destination.delay), completionCriteria: config.destination.completionCriteria) {
+            portalModel.info[idx].hideView = false
+            withAnimation(config.animation.value, completionCriteria: config.animation.completionCriteria) {
                 portalModel.info[idx].animateView = false
             } completion: {
                 portalModel.info[idx].initalized = false
@@ -218,7 +215,6 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
                 portalModel.info[idx].sourceAnchor = nil
                 portalModel.info[idx].destinationAnchor = nil
                 portalModel.info[idx].completion(false)
-                config.destination.completion()
             }
         }
     }
@@ -233,7 +229,7 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
 public extension View {
     func portalTransition<LayerView: View>(
         id: String,
-        config: PortalAnimationConfig = .init(),
+        config: PortalTransitionConfig = .init(),
         isActive: Binding<Bool>,
         @ViewBuilder layerView: @escaping () -> LayerView,
         completion: @escaping (Bool) -> Void = { _ in }
@@ -249,7 +245,7 @@ public extension View {
     
     func portalTransition<Item: Identifiable, LayerView: View>(
         item: Binding<Optional<Item>>,
-        config: PortalAnimationConfig = .init(),
+        config: PortalTransitionConfig = .init(),
         @ViewBuilder layerView: @escaping (Item) -> LayerView,
         completion: @escaping (Bool) -> Void = { _ in }
     ) -> some View {

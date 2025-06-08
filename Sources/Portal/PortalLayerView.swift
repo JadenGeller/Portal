@@ -91,6 +91,9 @@ fileprivate struct PortalLayerContentView: View {
             let dRect = proxy[destination]
             let animate = info.animateView
             
+            // Interpolate corner radius between source and destination based on animation state
+            let cornerRadius = animate ? info.corners.destination : info.corners.source
+            
             // Interpolate size between source and destination based on animation state
             let width = animate ? dRect.size.width : sRect.size.width
             let height = animate ? dRect.size.height : sRect.size.height
@@ -100,6 +103,7 @@ fileprivate struct PortalLayerContentView: View {
             let y = animate ? dRect.minY : sRect.minY
             
             layer
+                .clipShape(.rect(cornerRadius: cornerRadius, style: info.corners.style))
                 .frame(width: width, height: height)
                 .offset(x: x, y: y)
                 .transition(.identity)  // Prevents additional SwiftUI transitions

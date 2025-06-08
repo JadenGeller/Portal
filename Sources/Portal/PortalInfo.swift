@@ -59,6 +59,30 @@ public struct PortalInfo: Identifiable {
     /// Set when the source view reports its position through the preference system.
     public var sourceAnchor: Anchor<CGRect>? = nil
     
+    /// Animation configuration settings for this portal transition.
+    ///
+    /// Contains all the animation-related parameters that control how the portal
+    /// transition behaves, including timing, easing curves, and animation phases.
+    /// This centralized configuration allows for fine-tuned control over the
+    /// visual characteristics of the portal animation.
+    ///
+    /// The animation settings are applied to the intermediate layer view during
+    /// the transition between source and destination positions. Different animation
+    /// configurations can be used for different portal types or contexts.
+    public var animation: PortalAnimation = .init()
+
+    /// Corner styling configuration for the portal transition elements.
+    ///
+    /// Defines the corner radius and styling properties applied to the portal
+    /// elements during the transition animation. This allows for consistent
+    /// visual treatment of rounded corners, ensuring smooth interpolation
+    /// between source and destination corner styles.
+    ///
+    /// The corner configuration affects how the intermediate layer view appears
+    /// during the transition, providing visual continuity when transitioning
+    /// between views with different corner radius values.
+    public var corners: PortalCorners = .init()
+    
     /// Anchor bounds information for the destination (target) view.
     ///
     /// Contains the geometric bounds of the destination view in the coordinate space
