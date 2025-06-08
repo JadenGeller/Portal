@@ -207,8 +207,9 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
             }
             
         } else {
-            DispatchQueue.main.asyncAfter(deadline: .now())  {
+            
                 portalModel.info[idx].hideView = false
+            DispatchQueue.main.asyncAfter(deadline: .now())  {
                 withAnimation(config.destination.animation, completionCriteria: config.destination.completionCriteria) {
                     portalModel.info[idx].animateView = false
                 } completion: {
