@@ -123,7 +123,7 @@ public struct PortalAnimation {
     public init(
         _ animation: Animation = .smooth(duration: 0.3, extraBounce: 0.1),
         delay: TimeInterval = 0.06,
-        completionCriteria: AnimationCompletionCriteria = .logicallyComplete,
+        completionCriteria: AnimationCompletionCriteria = .removed,
     ) {
         self.value = animation
         self.delay = delay
