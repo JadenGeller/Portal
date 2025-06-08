@@ -312,38 +312,43 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
     private func onChange(oldValue: Bool, newValue: Bool) {
         guard let idx = portalModel.info.firstIndex(where: { $0.infoID == id }) else { return }
         
+        var portalInfoArray: [PortalInfo] {
+            get { portalModel.info }
+            set { portalModel.info = newValue }
+        }
+        
         // Configure portal info for any transition
-        portalModel.info[idx].initalized = true
-        portalModel.info[idx].animation = config.animation
-        portalModel.info[idx].corners = config.corners
-        portalModel.info[idx].completion = completion
-        portalModel.info[idx].layerView = AnyView(layerView())
+        portalInfoArray[idx].initalized = true
+        portalInfoArray[idx].animation = config.animation
+        portalInfoArray[idx].corners = config.corners
+        portalInfoArray[idx].completion = completion
+        portalInfoArray[idx].layerView = AnyView(layerView())
         
         if newValue {
             // Forward transition: isActive became true
             DispatchQueue.main.asyncAfter(deadline: .now() + config.animation.delay) {
                 withAnimation(config.animation.value, completionCriteria: config.animation.completionCriteria) {
-                    portalModel.info[idx].animateView = true
+                    portalInfoArray[idx].animateView = true
                 } completion: {
                     // Hide destination view and notify completion
-                    portalModel.info[idx].hideView = true
-                    portalModel.info[idx].completion(true)
+                    portalInfoArray[idx].hideView = true
+                    portalInfoArray[idx].completion(true)
                 }
             }
             
         } else {
             // Reverse transition: isActive became false
-            portalModel.info[idx].hideView = false
+            portalInfoArray[idx].hideView = false
             
             withAnimation(config.animation.value, completionCriteria: config.animation.completionCriteria) {
-                portalModel.info[idx].animateView = false
+                portalInfoArray[idx].animateView = false
             } completion: {
                 // Complete cleanup after reverse animation
-                portalModel.info[idx].initalized = false
-                portalModel.info[idx].layerView = nil
-                portalModel.info[idx].sourceAnchor = nil
-                portalModel.info[idx].destinationAnchor = nil
-                portalModel.info[idx].completion(false)
+                portalInfoArray[idx].initalized = false
+                portalInfoArray[idx].layerView = nil
+                portalInfoArray[idx].sourceAnchor = nil
+                portalInfoArray[idx].destinationAnchor = nil
+                portalInfoArray[idx].completion(false)
             }
         }
     }
