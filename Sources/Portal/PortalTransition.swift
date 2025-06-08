@@ -207,16 +207,18 @@ internal struct ConditionalPortalTransitionModifier<LayerView: View>: ViewModifi
             }
             
         } else {
-            portalModel.info[idx].hideView = false
-            withAnimation(config.destination.animation, completionCriteria: config.destination.completionCriteria) {
-                portalModel.info[idx].animateView = false
-            } completion: {
-                portalModel.info[idx].initalized = false
-                portalModel.info[idx].layerView = nil
-                portalModel.info[idx].sourceAnchor = nil
-                portalModel.info[idx].destinationAnchor = nil
-                portalModel.info[idx].completion(false)
-                config.destination.completion()
+            DispatchQueue.main.asyncAfter(deadline: .now() + config.destination.delay)  {
+                portalModel.info[idx].hideView = false
+                withAnimation(config.destination.animation, completionCriteria: config.destination.completionCriteria) {
+                    portalModel.info[idx].animateView = false
+                } completion: {
+                    portalModel.info[idx].initalized = false
+                    portalModel.info[idx].layerView = nil
+                    portalModel.info[idx].sourceAnchor = nil
+                    portalModel.info[idx].destinationAnchor = nil
+                    portalModel.info[idx].completion(false)
+                    config.destination.completion()
+                }
             }
         }
     }
