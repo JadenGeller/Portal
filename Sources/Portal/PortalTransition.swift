@@ -31,7 +31,8 @@ public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: Vi
     }
     
     private func onChange(oldValue: Bool, hasValue: Bool) {
-        
+        if hasValue {
+            
         guard let key = self.key, let unwrapped = item else { return }
         
         lastKey = key
@@ -49,7 +50,7 @@ public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: Vi
         portalModel.info[idx].layerView = AnyView(layerView(unwrapped))
         
         
-        if hasValue {
+        
             DispatchQueue.main.asyncAfter(deadline: .now() + config.animation.delay) {
                 withAnimation(config.animation.value, completionCriteria: config.animation.completionCriteria) {
                     portalModel.info[idx].animateView = true
@@ -59,6 +60,10 @@ public struct OptionalPortalTransitionModifier<Item: Identifiable, LayerView: Vi
                 }
             }
         } else {
+            guard let key = lastKey,
+                  let idx = portalModel.info.firstIndex(where: { $0.infoID == key })
+            else { return }
+            
             portalModel.info[idx].hideView = false
             withAnimation(config.animation.value, completionCriteria: config.animation.completionCriteria) {
                 portalModel.info[idx].animateView = false
