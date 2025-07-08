@@ -69,7 +69,7 @@ public struct PortalInfo: Identifiable {
     /// The animation settings are applied to the intermediate layer view during
     /// the transition between source and destination positions. Different animation
     /// configurations can be used for different portal types or contexts.
-    public var animation: PortalAnimation = .init()
+    public var animation: PortalAnimationProtocol = PortalAnimation()
 
     /// Corner styling configuration for the portal transition elements.
     ///
@@ -81,7 +81,10 @@ public struct PortalInfo: Identifiable {
     /// The corner configuration affects how the intermediate layer view appears
     /// during the transition, providing visual continuity when transitioning
     /// between views with different corner radius values.
-    public var corners: PortalCorners = .init()
+    ///
+    /// When `nil`, no corner clipping is applied, allowing content to extend
+    /// beyond frame boundaries during scaling transitions.
+    public var corners: PortalCorners? = nil
     
     /// Anchor bounds information for the destination (target) view.
     ///

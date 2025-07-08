@@ -17,30 +17,33 @@ import SwiftUI
 /// Example usage:
 /// ```swift
 /// let config = PortalTransitionConfig(
-///     animation: PortalAnimation(.spring(duration: 0.5), delay: 0.1),
+///     animation: PortalAnimation(.spring(duration: 0.5), delay: 0.1, duration: 0.5),
 ///     corners: PortalCorners(source: 8, destination: 16, style: .continuous)
 /// )
 ///
 /// // Use with portal animation
 /// portalTransition(id: "myPortal", config: config)
 /// ```
+@available(iOS 15.0, *)
 public struct PortalTransitionConfig {
     
     /// Animation timing and behavior configuration.
     ///
     /// Defines how the portal transition animates, including duration, easing curves,
-    /// delays, and completion criteria. This controls the temporal aspects of the
-    /// portal animation.
-    public let animation: PortalAnimation
+    /// and delays. This controls the temporal aspects of the portal animation.
+    public let animation: PortalAnimationProtocol
     
     /// Corner styling configuration for visual appearance.
     ///
     /// Defines the corner radius values and styling for both source and destination
     /// elements during the transition. This controls the spatial/visual aspects of
     /// the portal animation.
-    public let corners: PortalCorners
+    ///
+    /// When `nil`, no corner clipping is applied, allowing content to extend
+    /// beyond frame boundaries during scaling transitions.
+    public let corners: PortalCorners?
     
-    /// Initializes a new portal transition configuration.
+    /// Initializes a new portal transition configuration with basic animation.
     ///
     /// Creates a complete configuration object with specified animation and corner settings.
     /// Both parameters have sensible defaults, allowing for partial customization while
@@ -48,86 +51,205 @@ public struct PortalTransitionConfig {
     ///
     /// - Parameters:
     ///   - animation: The animation configuration. Defaults to a smooth 0.3s animation.
-    ///   - corners: The corner styling configuration. Defaults to no corner radius.
-    public init(animation: PortalAnimation = .init(), corners: PortalCorners = .init()) {
+    ///   - corners: The corner styling configuration. Defaults to nil (no clipping).
+    public init(animation: PortalAnimation = .init(), corners: PortalCorners? = nil) {
+        self.animation = animation
+        self.corners = corners
+    }
+    
+    /// Initializes a new portal transition configuration with iOS 17+ completion criteria.
+    ///
+    /// Creates a complete configuration object with specified animation and corner settings.
+    /// This initializer allows you to use completion criteria for more precise animation control.
+    ///
+    /// - Parameters:
+    ///   - animation: The animation configuration with completion criteria.
+    ///   - corners: The corner styling configuration. Defaults to nil (no clipping).
+    @available(iOS 17.0, *)
+    public init(animation: PortalAnimationWithCompletion, corners: PortalCorners? = nil) {
         self.animation = animation
         self.corners = corners
     }
 }
 
-/// Animation configuration for portal transitions.
+/// Protocol that defines the common interface for portal animations.
 ///
-/// This struct encapsulates all timing-related parameters for portal animations,
-/// including the SwiftUI animation curve, delay timing, and completion detection
-/// criteria. It provides fine-grained control over the temporal behavior of
-/// portal transitions.
+/// This protocol allows both `PortalAnimation` and `PortalAnimationWithCompletion` to be
+/// used interchangeably in the portal system while maintaining type safety.
+@available(iOS 15.0, *)
+public protocol PortalAnimationProtocol {
+    
+    /// The SwiftUI animation curve and timing configuration.
+    var value: Animation { get }
+    
+    /// Delay before the animation begins, in seconds.
+    var delay: TimeInterval { get }
+    
+    /// Executes the animation with appropriate completion handling for the iOS version.
+    ///
+    /// This method abstracts away the iOS version differences and provides a clean
+    /// interface for executing animations with completion callbacks.
+    ///
+    /// - Parameters:
+    ///   - animation: The animation block to execute.
+    ///   - completion: Called when animation completes.
+    func performAnimation<T>(
+        _ animation: @escaping () -> T,
+        completion: @escaping @MainActor () -> Void
+    )
+}
+
+/// Animation configuration for portal transitions (iOS 15+).
+///
+/// This struct encapsulates basic timing parameters for portal animations,
+/// including the SwiftUI animation curve and delay timing. It provides 
+/// control over the temporal behavior of portal transitions while maintaining
+/// compatibility with iOS 15+.
 ///
 /// **Key Features:**
 /// - Wraps SwiftUI's `Animation` type for curve definitions
 /// - Configurable delay for staggered animation effects
-/// - Completion criteria for accurate animation lifecycle management
+/// - Explicit duration for accurate iOS 15-16 completion timing
+/// - Automatically upgrades to modern completion criteria on iOS 17+
 ///
 /// **Default Behavior:**
-/// - Uses a smooth animation with slight bounce for natural feel
+/// - Uses appropriate animation type for the iOS version
 /// - Small delay to allow for view hierarchy updates
-/// - Logical completion detection for reliable callback timing
-public struct PortalAnimation {
+/// - Reliable completion detection across all iOS versions
+@available(iOS 15.0, *)
+public struct PortalAnimation: PortalAnimationProtocol {
     
     /// The SwiftUI animation curve and timing configuration.
-    ///
-    /// Defines the mathematical curve used for interpolating between animation
-    /// keyframes. This includes duration, easing functions, and any special
-    /// effects like spring physics or bounce.
-    ///
-    /// Common values:
-    /// - `.smooth(duration: 0.3)` - Standard smooth transition
-    /// - `.spring(duration: 0.5, bounce: 0.2)` - Physics-based spring
-    /// - `.easeInOut(duration: 0.4)` - Classic ease-in-out curve
     public let value: Animation
     
     /// Delay before the animation begins, in seconds.
-    ///
-    /// This delay allows time for view hierarchy changes to settle before
-    /// starting the portal animation. It's particularly important when the
-    /// portal transition involves conditional view rendering or navigation
-    /// changes that need time to complete.
-    ///
-    /// **Timing Considerations:**
-    /// - Too short: Animation may start before views are properly positioned
-    /// - Too long: Perceptible delay that feels unresponsive
-    /// - Default 0.06s: Balance between reliability and responsiveness
     public let delay: TimeInterval
     
-    /// Criteria for determining when the animation has completed.
-    ///
-    /// Defines how the portal system detects that the animation has finished,
-    /// which triggers cleanup operations and completion callbacks. Different
-    /// criteria may be appropriate for different types of animations.
-    ///
-    /// **Options:**
-    /// - `.logicallyComplete`: Animation logic considers it finished
-    /// - `.removed`: Animation is removed from the animation system
-    /// - `.finished`: All animation values have reached their targets
-    public let completionCriteria: AnimationCompletionCriteria
+    /// Duration of the animation, used for iOS 15-16 completion timing.
+    /// On iOS 17+, this is ignored in favor of completion criteria.
+    public let duration: TimeInterval
     
     /// Initializes a new portal animation configuration.
     ///
     /// Creates an animation configuration with specified timing parameters.
-    /// The default values are carefully chosen to provide smooth, responsive
-    /// animations that work well in most portal transition scenarios.
+    /// This works on all iOS versions and uses appropriate completion detection.
     ///
     /// - Parameters:
-    ///   - animation: The SwiftUI animation curve. Defaults to smooth with slight bounce.
-    ///   - delay: Start delay in seconds. Defaults to 0.06s for view settling.
-    ///   - completionCriteria: How to detect completion. Defaults to logical completion.
+    ///   - animation: The SwiftUI animation curve.
+    ///   - delay: Start delay in seconds. Defaults to 0.06s.
+    ///   - duration: Animation duration in seconds. Defaults to 0.35s.
     public init(
-        _ animation: Animation = .smooth(duration: 0.3, extraBounce: 0.1),
+        _ animation: Animation,
         delay: TimeInterval = 0.06,
-        completionCriteria: AnimationCompletionCriteria = .removed,
+        duration: TimeInterval = 0.35
+    ) {
+        self.value = animation
+        self.delay = delay
+        self.duration = duration
+    }
+    
+    /// Default initializer that works across all iOS versions.
+    ///
+    /// Creates a PortalAnimation with sensible defaults, automatically selecting
+    /// the best animation type for the current iOS version.
+    public init() {
+        if #available(iOS 17.0, *) {
+            self.init(.smooth(duration: 0.3, extraBounce: 0.1), delay: 0.06, duration: 0.3)
+        } else {
+            self.init(.spring(duration: 0.3, bounce: 0.1), delay: 0.06, duration: 0.3)
+        }
+    }
+    
+    /// Executes the animation with appropriate completion handling for the iOS version.
+    public func performAnimation<T>(
+        _ animation: @escaping () -> T,
+        completion: @escaping @MainActor () -> Void
+    ) {
+        if #available(iOS 17.0, *) {
+            withAnimation(value, completionCriteria: .removed) {
+                _ = animation()
+            } completion: {
+                Task { @MainActor in
+                    completion()
+                }
+            }
+        } else {
+            withAnimation(value) {
+                _ = animation()
+            }
+            // For iOS 15, handle completion using explicit duration
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                Task { @MainActor in
+                    completion()
+                }
+            }
+        }
+    }
+}
+
+/// Animation configuration for portal transitions with iOS 17+ completion criteria.
+///
+/// This struct provides advanced animation control with modern completion criteria
+/// detection. It's only available on iOS 17+ where `AnimationCompletionCriteria` 
+/// is supported.
+///
+/// **Key Features:**
+/// - Wraps SwiftUI's `Animation` type for curve definitions
+/// - Configurable delay for staggered animation effects
+/// - Configurable completion criteria for precise animation lifecycle control
+/// - Type-safe completion criteria handling
+///
+/// **Usage:**
+/// ```swift
+/// let animation = PortalAnimationWithCompletion(
+///     .smooth(duration: 0.5),
+///     delay: 0.1,
+///     completionCriteria: .logicallyComplete
+/// )
+/// ```
+@available(iOS 17.0, *)
+public struct PortalAnimationWithCompletion: PortalAnimationProtocol {
+    
+    /// The SwiftUI animation curve and timing configuration.
+    public let value: Animation
+    
+    /// Delay before the animation begins, in seconds.
+    public let delay: TimeInterval
+    
+    /// Completion criteria for detecting when the animation finishes.
+    public let completionCriteria: AnimationCompletionCriteria
+    
+    /// Initializes a new portal animation configuration with completion criteria.
+    ///
+    /// Creates an animation configuration with modern completion criteria detection.
+    /// This provides precise control over when completion callbacks are triggered.
+    ///
+    /// - Parameters:
+    ///   - animation: The SwiftUI animation curve.
+    ///   - delay: Start delay in seconds. Defaults to 0.06s.
+    ///   - completionCriteria: How to detect animation completion. Defaults to .removed.
+    public init(
+        _ animation: Animation,
+        delay: TimeInterval = 0.06,
+        completionCriteria: AnimationCompletionCriteria = .removed
     ) {
         self.value = animation
         self.delay = delay
         self.completionCriteria = completionCriteria
+    }
+    
+    /// Executes the animation with iOS 17+ completion criteria.
+    public func performAnimation<T>(
+        _ animation: @escaping () -> T,
+        completion: @escaping @MainActor () -> Void
+    ) {
+        withAnimation(value, completionCriteria: completionCriteria) {
+            _ = animation()
+        } completion: {
+            Task { @MainActor in
+                completion()
+            }
+        }
     }
 }
 
@@ -146,6 +268,7 @@ public struct PortalAnimation {
 /// **Style Consistency:**
 /// The corner style (circular vs. continuous) is applied uniformly to maintain
 /// visual consistency with the rest of the application's design language.
+@available(iOS 15.0, *)
 public struct PortalCorners {
     
     /// Corner radius for the source (starting) element, in points.
