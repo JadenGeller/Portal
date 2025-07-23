@@ -227,121 +227,27 @@ let buttonToSheetConfig = PortalTransitionConfig(
 
 ---
 
-## Animation Best Practices
+## Reusable Configurations
 
-### Performance Optimization
-
-1. **Use appropriate completion criteria** (iOS 17+):
-   ```swift
-   PortalAnimationWithCompletion(
-       .smooth(duration: 0.4),
-       completionCriteria: .removed  // More performant than .logicallyComplete
-   )
-   ```
-
-2. **Choose efficient animation types**:
-   - `.spring()` for natural motion
-   - `.smooth()` for iOS 17+ optimized animations
-   - Avoid complex `.timingCurve()` for simple transitions
-
-### Visual Consistency
-
-1. **Match your app's animation language**:
-   ```swift
-   // Consistent with iOS system animations
-   let systemConfig = PortalTransitionConfig(
-       animation: PortalAnimation(.spring(response: 0.4, dampingFraction: 0.8))
-   )
-   ```
-
-2. **Use consistent timing across similar transitions**:
-   ```swift
-   // Define once, use everywhere
-   extension PortalTransitionConfig {
-       static let standard = PortalTransitionConfig(
-           animation: PortalAnimation(.spring(response: 0.4, dampingFraction: 0.8))
-       )
-       
-       static let quick = PortalTransitionConfig(
-           animation: PortalAnimation(.spring(response: 0.3, dampingFraction: 0.9))
-       )
-   }
-   ```
-
-### Accessibility
-
-Portal animations automatically respect system accessibility settings:
-
-- Reduced motion preferences are honored
-- Animation durations scale with accessibility settings
-- High contrast modes are supported
-
----
-
-## Debugging Animations
-
-### Animation Timing
-
-Use completion handlers to debug timing:
+Define animation configurations once and reuse them:
 
 ```swift
-.portalTransition(
-    id: "debug",
-    config: config,
-    isActive: $isActive,
-    completion: { success in
-        print("Animation completed: \(success)")
-    }
-) {
-    MyLayerView()
+extension PortalTransitionConfig {
+    static let standard = PortalTransitionConfig(
+        animation: PortalAnimation(.spring(response: 0.4, dampingFraction: 0.8))
+    )
+    
+    static let quick = PortalTransitionConfig(
+        animation: PortalAnimation(.spring(response: 0.3, dampingFraction: 0.9))
+    )
 }
-```
 
-### Visual Debugging
-
-Add visual indicators to your layer views:
-
-```swift
-.portalTransition(id: "debug", config: config, isActive: $isActive) {
-    MyLayerView()
-        .overlay(
-            Rectangle()
-                .stroke(Color.red, lineWidth: 2)
-                .opacity(0.5)
-        )
-}
+// Usage
+.portalTransition(id: "myPortal", config: .standard, isActive: $isActive)
 ```
 
 ---
 
-## Migration from Legacy APIs
-
-If you're updating from older Portal versions:
-
-```swift
-// Old API (deprecated)
-.portalTransition(
-    id: "myPortal",
-    animate: $isActive,
-    animation: .spring(response: 0.4, dampingFraction: 0.8),
-    animationDuration: 0.4,
-    delay: 0.1
-) { ... }
-
-// New API
-.portalTransition(
-    id: "myPortal",
-    config: .init(
-        animation: PortalAnimation(
-            .spring(response: 0.4, dampingFraction: 0.8),
-            delay: 0.1,
-            duration: 0.4
-        )
-    ),
-    isActive: $isActive
-) { ... }
-```
-
 ---
 
-The Portal animation system provides the flexibility to create everything from subtle micro-interactions to dramatic scene transitions, all while maintaining performance and accessibility standards.
+Portal provides `PortalTransitionConfig` for configuring animations, with support for both iOS 15+ compatible `PortalAnimation` and iOS 17+ `PortalAnimationWithCompletion` types.
