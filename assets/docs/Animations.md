@@ -86,6 +86,42 @@ let configWithoutCorners = PortalTransitionConfig(
 
 ---
 
+## Visual Feedback During Transitions
+
+Portal examples demonstrate visual feedback during transitions using a custom `AnimatedLayer` component. This provides the "bounce" effect you see when tapping elements in the examples.
+
+### Current Implementation
+
+Visual feedback for Portal transitions is currently implemented as example code rather than a formal API. The examples include an `AnimatedLayer` component that:
+
+- Monitors Portal's internal state through `@Environment(CrossModel.self)` (iOS 17+) or `@EnvironmentObject` (iOS 15+)
+- Provides scale animation feedback when transitions are active
+- Handles iOS version differences automatically
+
+### Using Visual Feedback in Your App
+
+For now, refer to the source code for implementation details:
+
+- **[`Sources/Portal/Examples/AnimatedLayer.swift`](../Sources/Portal/Examples/AnimatedLayer.swift)** - Complete implementation with iOS version handling
+- **[`PortalExample_CardGrid.swift`](../Sources/Portal/Examples/PortalExample_CardGrid.swift)** - Usage examples
+- **[`PortalExample_Comparison.swift`](../Sources/Portal/Examples/PortalExample_Comparison.swift)** - More usage patterns
+
+### Animation Constants
+
+The examples use these predefined animation values:
+
+```swift
+let portal_animationDuration: TimeInterval = 0.4
+let portal_animationExample: Animation = .smooth(duration: 0.4, extraBounce: 0.25)
+let portal_animationExampleExtraBounce: Animation = .smooth(duration: 0.52, extraBounce: 0.55)
+```
+
+### Future API
+
+A proper API for visual feedback during Portal transitions is planned for a future release. Until then, the example implementation provides a working pattern you can adapt for your needs.
+
+---
+
 ## Animation Examples
 
 ### Spring-Based Transitions
