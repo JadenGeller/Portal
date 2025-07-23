@@ -42,26 +42,26 @@ public struct Portal<Content: View>: View {
         return [:]
     }
     
-    /// Handles preference changes for this portal.
-    ///
-    /// - Parameter prefs: The updated preference dictionary containing anchor bounds
-    private func preferenceChangePerform(prefs: [String: Anchor<CGRect>]) {
-        Task { @MainActor in
-            if let idx = index, portalModel.info[idx].initalized {
-                if !source {
-                    portalModel.info[idx].destinationAnchor = prefs[key]
-                } else if portalModel.info[idx].sourceAnchor == nil {
-                    portalModel.info[idx].sourceAnchor = prefs[key]
-                }
-            }
-        }
-    }
-    
     public var body: some View {
-        content
+        let currentKey = key
+        let currentIndex = index
+        let isSource = source
+        let model = portalModel
+        
+        return content
             .opacity(opacity)
             .anchorPreference(key: AnchorKey.self, value: .bounds, transform: anchorPreferenceTransform)
-            .onPreferenceChange(AnchorKey.self, perform: preferenceChangePerform)
+            .onPreferenceChange(AnchorKey.self) { prefs in
+                Task { @MainActor in
+                    if let idx = currentIndex, model.info[idx].initalized {
+                        if !isSource {
+                            model.info[idx].destinationAnchor = prefs[currentKey]
+                        } else if model.info[idx].sourceAnchor == nil {
+                            model.info[idx].sourceAnchor = prefs[currentKey]
+                        }
+                    }
+                }
+            }
     }
     
     private var key: String { source ? id : "\(id)DEST" }
@@ -120,26 +120,26 @@ public struct PortalLegacy<Content: View>: View {
         return result
     }
     
-    /// Handles preference changes for this portal.
-    ///
-    /// - Parameter prefs: The updated preference dictionary containing anchor bounds
-    private func preferenceChangePerform(prefs: [String: Anchor<CGRect>]) {
-        Task { @MainActor in
-            if let idx = index, portalModel.info[idx].initalized {
-                if !source {
-                    portalModel.info[idx].destinationAnchor = prefs[key]
-                } else if portalModel.info[idx].sourceAnchor == nil {
-                    portalModel.info[idx].sourceAnchor = prefs[key]
-                }
-            }
-        }
-    }
-    
     public var body: some View {
-        content
+        let currentKey = key
+        let currentIndex = index
+        let isSource = source
+        let model = portalModel
+        
+        return content
             .opacity(opacity)
             .anchorPreference(key: AnchorKey.self, value: .bounds, transform: anchorPreferenceTransform)
-            .onPreferenceChange(AnchorKey.self, perform: preferenceChangePerform)
+            .onPreferenceChange(AnchorKey.self) { prefs in
+                Task { @MainActor in
+                    if let idx = currentIndex, model.info[idx].initalized {
+                        if !isSource {
+                            model.info[idx].destinationAnchor = prefs[currentKey]
+                        } else if model.info[idx].sourceAnchor == nil {
+                            model.info[idx].sourceAnchor = prefs[currentKey]
+                        }
+                    }
+                }
+            }
     }
     
     private var key: String { source ? id : "\(id)DEST" }
