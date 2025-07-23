@@ -43,6 +43,7 @@ public struct BasicSheetExample: View {
                             }
                         }
                         
+                        
                         Text("Portal Card")
                             .font(.headline)
                             .fontWeight(.medium)

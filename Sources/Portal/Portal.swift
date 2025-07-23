@@ -158,9 +158,86 @@ public struct PortalLegacy<Content: View>: View {
     }
 }
 
+// MARK: - Portal Role Enum
+
+/// Defines the role of a portal in a transition.
+@available(iOS 15.0, *)
+public enum PortalRole {
+    /// The portal acts as a source (leaving view) - the starting point of the transition.
+    case source
+    /// The portal acts as a destination (arriving view) - the ending point of the transition.
+    case destination
+}
+
 // MARK: - View Extensions
 
 public extension View {
+    
+    /// Marks this view as a portal with the specified role.
+    ///
+    /// This unified modifier can mark a view as either a source or destination for a portal transition.
+    /// It provides a cleaner API compared to separate `.portalSource()` and `.portalDestination()` modifiers.
+    ///
+    /// - Parameters:
+    ///   - id: A unique string identifier for this portal. This should match the `id` used for the corresponding portal transition.
+    ///   - role: The role of this portal (`.source` or `.destination`).
+    ///
+    /// Example usage:
+    /// ```swift
+    /// // Source view
+    /// Image("cover")
+    ///     .portal(id: "Book1", .source)
+    ///
+    /// // Destination view
+    /// Image("cover")
+    ///     .portal(id: "Book1", .destination)
+    /// ```
+    @available(iOS 15.0, *)
+    func portal(id: String, _ role: PortalRole) -> some View {
+        let isSource = role == .source
+        if #available(iOS 17.0, *) {
+            return Portal(id: id, source: isSource) { self }
+        } else {
+            return PortalLegacy(id: id, source: isSource) { self }
+        }
+    }
+    
+    /// Marks this view as a portal with the specified role using an `Identifiable` item's ID.
+    ///
+    /// This unified modifier can mark a view as either a source or destination for a portal transition,
+    /// automatically extracting the string representation of an `Identifiable` item's ID.
+    ///
+    /// - Parameters:
+    ///   - item: An `Identifiable` item whose ID will be used as the portal identifier.
+    ///   - role: The role of this portal (`.source` or `.destination`).
+    ///
+    /// Example usage:
+    /// ```swift
+    /// struct Book: Identifiable {
+    ///     let id = UUID()
+    ///     let title: String
+    /// }
+    ///
+    /// let book = Book(title: "SwiftUI Guide")
+    ///
+    /// // Source view
+    /// Image("thumbnail")
+    ///     .portal(item: book, .source)
+    ///
+    /// // Destination view
+    /// Image("fullsize")
+    ///     .portal(item: book, .destination)
+    /// ```
+    @available(iOS 15.0, *)
+    func portal<Item: Identifiable>(item: Item, _ role: PortalRole) -> some View {
+        let key = "\(item.id)"
+        let isSource = role == .source
+        if #available(iOS 17.0, *) {
+            return Portal(id: key, source: isSource) { self }
+        } else {
+            return PortalLegacy(id: key, source: isSource) { self }
+        }
+    }
     /// Marks this view as a portal source (leaving view).
     ///
     /// Attach this modifier to the view that should act as the source for a portal transition.
@@ -174,7 +251,10 @@ public extension View {
     /// Image("cover")
     ///     .portalSource(id: "Book1")
     /// ```
+    ///
+    /// - Warning: This method is deprecated. Use `.portal(id:, .source)` instead.
     @available(iOS 15.0, *)
+    @available(iOS, deprecated: 15.0, message: "Use .portal(id:, .source) instead")
     func portalSource(id: String) -> some View {
         if #available(iOS 17.0, *) {
             return Portal(id: id, source: true) { self }
@@ -209,7 +289,10 @@ public extension View {
     /// Image("cover")
     ///     .portalSource(item: book)  // Uses book.id automatically
     /// ```
+    ///
+    /// - Warning: This method is deprecated. Use `.portal(item:, .source)` instead.
     @available(iOS 15.0, *)
+    @available(iOS, deprecated: 15.0, message: "Use .portal(item:, .source) instead")
     func portalSource<Item: Identifiable>(item: Item) -> some View {
         let key = "\(item.id)"
         if #available(iOS 17.0, *) {
@@ -232,7 +315,10 @@ public extension View {
     /// Image("cover")
     ///     .portalDestination(id: "Book1")
     /// ```
+    ///
+    /// - Warning: This method is deprecated. Use `.portal(id:, .destination)` instead.
     @available(iOS 15.0, *)
+    @available(iOS, deprecated: 15.0, message: "Use .portal(id:, .destination) instead")
     func portalDestination(id: String) -> some View {
         if #available(iOS 17.0, *) {
             return Portal(id: id, source: false) { self }
@@ -275,7 +361,10 @@ public extension View {
     ///
     /// **Important:** Both source and destination views must use the same `Identifiable` item
     /// instance (or items with identical IDs) for the portal animation to work correctly.
+    ///
+    /// - Warning: This method is deprecated. Use `.portal(item:, .destination)` instead.
     @available(iOS 15.0, *)
+    @available(iOS, deprecated: 15.0, message: "Use .portal(item:, .destination) instead")
     func portalDestination<Item: Identifiable>(item: Item) -> some View {
         let key = "\(item.id)"
         if #available(iOS 17.0, *) {
