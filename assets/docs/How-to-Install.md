@@ -2,7 +2,7 @@
 
 **Requirements**
 - iOS 15.0+
-- Swift 5.5+
+- Swift 6.0+
 
 **In Xcode:**  
 Go to `File` → `Add Packages...` and enter:
@@ -14,7 +14,7 @@ https://github.com/Aeastr/Portal.git
 **Or add to your `Package.swift`:**
 
 ```swift
-.package(url: "https://github.com/Aeastr/Portal.git", from: "0.0.1")
+.package(url: "https://github.com/Aeastr/Portal.git", from: "1.0.0")
 ```
 
 **Then import Portal in your Swift files:**

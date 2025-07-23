@@ -1,108 +1,253 @@
-> **Note:** This is just one way to create custom transitions. The portal system is flexible and allows for many different animation approaches. A more declarative API for transitions is in development — this API is temporary.
+# Portal Animations
 
-### Creating a Scale-Bounce Transition
+Portal provides a comprehensive animation system built around `PortalTransitionConfig`, offering both simple defaults and advanced customization options.
 
-We’ll build a reusable view that scales up and snaps back when the portal activates.
+---
 
-#### 1. Define Your Animation Constants
+## Animation Types
+
+Portal supports two animation types that can be used with `PortalTransitionConfig`:
+
+- **`PortalAnimation`**: iOS 15+ compatible, uses duration-based completion timing
+- **`PortalAnimationWithCompletion`**: iOS 17+ only, uses modern completion criteria for precise control
+
+Both types conform to `PortalAnimationProtocol` and can be used interchangeably in `PortalTransitionConfig`.
+
+---
+
+## Animation Configuration
+
+### Basic Animation Setup (iOS 15+)
+
+Portal uses `PortalAnimation` for cross-iOS compatibility:
 
 ```swift
-let transitionDuration: TimeInterval = 0.4
-
-let scaleAnimation = Animation.smooth(
-  duration: transitionDuration,
-  extraBounce: 0.25
+// Simple configuration
+let config = PortalTransitionConfig(
+    animation: PortalAnimation(.spring(response: 0.4, dampingFraction: 0.8))
 )
 
-let bounceAnimation = Animation.smooth(
-  duration: transitionDuration + 0.12,
-  extraBounce: 0.55
+// With timing control
+let config = PortalTransitionConfig(
+    animation: PortalAnimation(
+        .smooth(duration: 0.5, extraBounce: 0.1),
+        delay: 0.1,
+        duration: 0.5
+    )
 )
 ```
 
-#### 2. Create a Custom Transition View
+### iOS 17+ Enhanced Animations
+
+For iOS 17+, use `PortalAnimationWithCompletion` for precise control:
 
 ```swift
-struct ScaleTransitionView<Content: View>: View {
-  @EnvironmentObject private var portalModel: CrossModel
-  let id: String
-  @ViewBuilder let content: () -> Content
-
-  @State private var scale: CGFloat = 1
-
-  var body: some View {
-    // Check whether this portal is animating
-    let isActive = portalModel.info
-      .first(where: { $0.infoID == id })?
-      .animateView ?? false
-
-    content()
-      .scaleEffect(scale)
-      .onAppear { scale = 1 }
-      .onChangeCompat(of: isActive) { newValue in
-        if newValue {
-          // 1) Scale up
-          withAnimation(scaleAnimation) {
-            scale = 1.25
-          }
-          // 2) Bounce back
-          DispatchQueue.main.asyncAfter(
-            deadline: .now() + (transitionDuration / 2) - 0.1
-          ) {
-            withAnimation(bounceAnimation) {
-              scale = 1
-            }
-          }
-        } else {
-          // Reset on deactivate
-          withAnimation { scale = 1 }
-        }
-      }
-  }
-}
+@available(iOS 17.0, *)
+let advancedConfig = PortalTransitionConfig(
+    animation: PortalAnimationWithCompletion(
+        .smooth(duration: 0.5),
+        delay: 0.1,
+        completionCriteria: .logicallyComplete
+    )
+)
 ```
 
-#### 3. Apply It to Your Portal
+---
+
+## Corner Styling
+
+Portal supports optional corner radius transitions. The `corners` parameter in `PortalTransitionConfig` is optional:
 
 ```swift
-// 1) Source
-ScaleTransitionView(id: "myPortal") {
-  RoundedRectangle(cornerRadius: 16).fill(gradient)
-}
-.frame(width: 100, height: 100)
-.portalSource(id: "myPortal")
+// With corner clipping and transitions
+let configWithCorners = PortalTransitionConfig(
+    animation: PortalAnimation(.spring(response: 0.4, dampingFraction: 0.8)),
+    corners: PortalCorners(
+        source: 8,        // Starting corner radius
+        destination: 20,  // Ending corner radius
+        style: .continuous // Apple's continuous corner style
+    )
+)
 
-// 2) Destination
-ScaleTransitionView(id: "myPortal") {
-  RoundedRectangle(cornerRadius: 16).fill(gradient)
-}
-.frame(width: 220, height: 220)
-.portalDestination(id: "myPortal")
-
-// 3) Transition overlay
-.portalTransition(
-  id:               "myPortal",
-  animate:          $isShowing,
-  animation:        scaleAnimation,
-  animationDuration: transitionDuration
-) {
-  ScaleTransitionView(id: "myPortal") {
-    RoundedRectangle(cornerRadius: 16).fill(gradient)
-  }
-}
+// Without corner clipping (default)
+let configWithoutCorners = PortalTransitionConfig(
+    animation: PortalAnimation(.spring(response: 0.4, dampingFraction: 0.8))
+    // corners: nil (default) - no clipping applied
+)
 ```
 
-### Summary
+**Corner Behavior:**
+- **When `corners` is provided**: Views are clipped and corner radius transitions smoothly from source to destination values
+- **When `corners` is `nil` (default)**: No clipping is applied, allowing content to extend beyond frame boundaries during scaling transitions
 
-1. `ScaleTransitionView` observes portal state via `portalModel`.  
-2. On **activate**:
-   - It scales up to 1.25× with a smooth curve  
-   - After a brief delay, it bounces back to 1.0×  
-3. On **deactivate**, it smoothly returns to 1.0×.
+**Corner Styles:**
+- `.circular` - Traditional circular arc corners
+- `.continuous` - Apple's organic continuous corner curve
 
-### Tips for Further Customization
+---
 
-- Vary the scale factors (e.g. 1.2 → 1.5) to change the “pop” intensity  
-- Tweak `extraBounce` and durations for different feels  
-- Layer in rotation, opacity, or color effects  
-- Combine multiple transforms for rich, complex transitions
+## Visual Feedback During Transitions
+
+Portal examples demonstrate visual feedback during transitions using a custom `AnimatedLayer` component. This provides the "bounce" effect you see when tapping elements in the examples.
+
+### Current Implementation
+
+Visual feedback for Portal transitions is currently implemented as example code rather than a formal API. The examples include an `AnimatedLayer` component that:
+
+- Monitors Portal's internal state through `@Environment(CrossModel.self)` (iOS 17+) or `@EnvironmentObject` (iOS 15+)
+- Provides scale animation feedback when transitions are active
+- Handles iOS version differences automatically
+
+### Using Visual Feedback in Your App
+
+For now, refer to the source code for implementation details:
+
+- **[`Sources/Portal/Examples/AnimatedLayer.swift`](../Sources/Portal/Examples/AnimatedLayer.swift)** - Complete implementation with iOS version handling
+- **[`PortalExample_CardGrid.swift`](../Sources/Portal/Examples/PortalExample_CardGrid.swift)** - Usage examples
+- **[`PortalExample_Comparison.swift`](../Sources/Portal/Examples/PortalExample_Comparison.swift)** - More usage patterns
+
+### Animation Constants
+
+The examples use these predefined animation values:
+
+```swift
+let portal_animationDuration: TimeInterval = 0.4
+let portal_animationExample: Animation = .smooth(duration: 0.4, extraBounce: 0.25)
+let portal_animationExampleExtraBounce: Animation = .smooth(duration: 0.52, extraBounce: 0.55)
+```
+
+### Future API
+
+A proper API for visual feedback during Portal transitions is planned for a future release. Until then, the example implementation provides a working pattern you can adapt for your needs.
+
+---
+
+## Animation Examples
+
+### Spring-Based Transitions
+
+```swift
+// Bouncy spring
+let bouncyConfig = PortalTransitionConfig(
+    animation: PortalAnimation(.spring(response: 0.6, dampingFraction: 0.6))
+)
+
+// Smooth spring
+let smoothConfig = PortalTransitionConfig(
+    animation: PortalAnimation(.spring(response: 0.4, dampingFraction: 0.8))
+)
+```
+
+### iOS 17+ Smooth Animations
+
+```swift
+// Basic smooth animation
+let smoothConfig = PortalTransitionConfig(
+    animation: PortalAnimation(.smooth(duration: 0.4))
+)
+
+// Smooth with bounce
+let smoothBounceConfig = PortalTransitionConfig(
+    animation: PortalAnimation(.smooth(duration: 0.4, extraBounce: 0.2))
+)
+```
+
+### Custom Timing Curves
+
+```swift
+// Ease-in-out
+let easeConfig = PortalTransitionConfig(
+    animation: PortalAnimation(.easeInOut(duration: 0.5))
+)
+
+// Custom timing curve
+let customConfig = PortalTransitionConfig(
+    animation: PortalAnimation(.timingCurve(0.25, 0.1, 0.25, 1, duration: 0.6))
+)
+```
+
+---
+
+## Advanced Animation Patterns
+
+### Staggered Animations
+
+Use delays for staggered effects:
+
+```swift
+let staggeredConfig = PortalTransitionConfig(
+    animation: PortalAnimation(
+        .spring(response: 0.4, dampingFraction: 0.8),
+        delay: 0.2  // Delay the start
+    )
+)
+```
+
+### Multi-Phase Animations
+
+Combine different animation phases:
+
+```swift
+// Phase 1: Quick scale up
+let scaleUpConfig = PortalTransitionConfig(
+    animation: PortalAnimation(.spring(response: 0.2, dampingFraction: 0.9))
+)
+
+// Phase 2: Settle with bounce
+let settleConfig = PortalTransitionConfig(
+    animation: PortalAnimation(.spring(response: 0.6, dampingFraction: 0.6))
+)
+```
+
+### Corner Morphing
+
+Animate between different corner styles:
+
+```swift
+// Card to modal transition
+let cardToModalConfig = PortalTransitionConfig(
+    animation: PortalAnimation(.smooth(duration: 0.5)),
+    corners: PortalCorners(
+        source: 12,           // Card corner radius
+        destination: 0,       // Modal (no corners)
+        style: .continuous
+    )
+)
+
+// Button to sheet transition
+let buttonToSheetConfig = PortalTransitionConfig(
+    animation: PortalAnimation(.spring(response: 0.4, dampingFraction: 0.8)),
+    corners: PortalCorners(
+        source: 25,           // Pill button
+        destination: 16,      // Sheet corners
+        style: .continuous
+    )
+)
+```
+
+---
+
+## Reusable Configurations
+
+Define animation configurations once and reuse them:
+
+```swift
+extension PortalTransitionConfig {
+    static let standard = PortalTransitionConfig(
+        animation: PortalAnimation(.spring(response: 0.4, dampingFraction: 0.8))
+    )
+    
+    static let quick = PortalTransitionConfig(
+        animation: PortalAnimation(.spring(response: 0.3, dampingFraction: 0.9))
+    )
+}
+
+// Usage
+.portalTransition(id: "myPortal", config: .standard, isActive: $isActive)
+```
+
+---
+
+---
+
+Portal provides `PortalTransitionConfig` for configuring animations, with support for both iOS 15+ compatible `PortalAnimation` and iOS 17+ `PortalAnimationWithCompletion` types.

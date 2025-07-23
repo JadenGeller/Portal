@@ -61,12 +61,19 @@
   Drives the floating overlay animation based on a `Binding<Bool>` (`isActive`) and a static string `id` matching the source/destination.
 
 - **`.portalTransition(item: ...)`** \
-  Drives the floating overlay animation based on a `Binding<Optional<Item>>` (`item`), where `Item` is `Identifiable`. Automatically keys the transition to the item's ID
+  Drives the floating overlay animation based on a `Binding<Optional<Item>>` (`item`), where `Item` is `Identifiable`. Automatically keys the transition to the item's ID.
+
+- **Customizable Transitions** \
+  Configure animations with `PortalTransitionConfig` for fine-grained control over timing, easing, and corner styling.
+
+- **iOS 17 Optimized** \
+  Takes advantage of modern SwiftUI features like Environment values and completion criteria on iOS 17+.
+
+- **iOS 15+ Compatible** \
+  Maintains backward compatibility with iOS 15-16 using fallback implementations.
 
 - **No custom presentation modifiers required** \
   Works directly with standard SwiftUI presentation methods (`.sheet`, `.navigationDestination`, etc.).
-
-- **iOS 15+ support**
 
 ### 📚 Documentation
 
