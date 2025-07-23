@@ -45,17 +45,11 @@
 - **`.portalContainer()`** \
   View extension for easily wrapping any view hierarchy in a `PortalContainer`.
 
-- **`.portalSource(id:)`** \
-  Marks a view as the source anchor for a portal transition using a static string identifier.
+- **`.portal(id:, .source/.destination)`** \
+  Marks a view as source or destination anchor for a portal transition using a static string identifier.
 
-- **`.portalSource(item:)`** \
-  Marks a view as the source anchor for a portal transition, keyed by an `Identifiable` item's ID.
-
-- **`.portalDestination(id:)`** \
-  Marks a view as the destination anchor for a portal transition using a static string identifier.
-
-- **`.portalDestination(item:)`** \
-  Marks a view as the destination anchor for a portal transition, keyed by an `Identifiable` item's ID.
+- **`.portal(item:, .source/.destination)`** \
+  Marks a view as source or destination anchor for a portal transition, keyed by an `Identifiable` item's ID.
 
 - **`.portalTransition(id: isActive: ...)`** \
   Drives the floating overlay animation based on a `Binding<Bool>` (`isActive`) and a static string `id` matching the source/destination.
