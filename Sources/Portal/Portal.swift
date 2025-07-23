@@ -36,20 +36,17 @@ public struct Portal<Content: View>: View {
     /// - Parameter anchor: The anchor bounds to transform
     /// - Returns: A dictionary mapping portal IDs to their anchor bounds
     private func anchorPreferenceTransform(anchor: Anchor<CGRect>) -> [String: Anchor<CGRect>] {
-        var result: [String: Anchor<CGRect>] = [:]
-        MainActor.assumeIsolated {
-            if let idx = index, portalModel.info[idx].initalized {
-                result = [key: anchor]
-            }
+        if let idx = index, portalModel.info[idx].initalized {
+            return [key: anchor]
         }
-        return result
+        return [:]
     }
     
     /// Handles preference changes for this portal.
     ///
     /// - Parameter prefs: The updated preference dictionary containing anchor bounds
     private func preferenceChangePerform(prefs: [String: Anchor<CGRect>]) {
-        MainActor.assumeIsolated {
+        Task { @MainActor in
             if let idx = index, portalModel.info[idx].initalized {
                 if !source {
                     portalModel.info[idx].destinationAnchor = prefs[key]
@@ -127,11 +124,13 @@ public struct PortalLegacy<Content: View>: View {
     ///
     /// - Parameter prefs: The updated preference dictionary containing anchor bounds
     private func preferenceChangePerform(prefs: [String: Anchor<CGRect>]) {
-        if let idx = index, portalModel.info[idx].initalized {
-            if !source {
-                portalModel.info[idx].destinationAnchor = prefs[key]
-            } else if portalModel.info[idx].sourceAnchor == nil {
-                portalModel.info[idx].sourceAnchor = prefs[key]
+        Task { @MainActor in
+            if let idx = index, portalModel.info[idx].initalized {
+                if !source {
+                    portalModel.info[idx].destinationAnchor = prefs[key]
+                } else if portalModel.info[idx].sourceAnchor == nil {
+                    portalModel.info[idx].sourceAnchor = prefs[key]
+                }
             }
         }
     }
