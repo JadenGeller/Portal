@@ -215,10 +215,11 @@ private struct PortalExample_CardDetail: View {
                 }
                 .frame(maxWidth: .infinity)
             }
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle(card.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar{
-                ToolbarItem(placement: .bottomBar) {
+                ToolbarItem() {
                     Button("Done") {
                         dismiss()
                     }

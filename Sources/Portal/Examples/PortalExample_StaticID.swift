@@ -202,6 +202,7 @@ private struct PortalExample_StaticIDDetail: View {
                         )
                     }
                     .portal(id: "codeBlock", .destination)
+                    .padding(.top, 20)
                     .padding(.horizontal, 20)
                     
                     
@@ -218,7 +219,7 @@ private struct PortalExample_StaticIDDetail: View {
             .navigationTitle(("Code Block Detail"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar{
-                ToolbarItem(placement: .bottomBar) {
+                ToolbarItem() {
                     Button("Done"){
                         dismiss()
                     }
