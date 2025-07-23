@@ -24,81 +24,75 @@ _Check out the video for a side-by-side comparison of the effects!_
 
 All examples are available in the source code under `Sources/Portal/Examples/`:
 
-#### iOS 15+ Compatible Examples
+- **`PortalExample_Comparison`**
+  A real comparison showing Portal vs native iOS transitions side-by-side. Demonstrates Portal's cross-boundary capabilities compared to standard SwiftUI behavior. iOS 15+ compatible with conditional iOS 18 zoom transition support.
 
-- **`BasicSheetExample`**
-  Demonstrates a simple portal transition between a main view and a sheet presentation. Shows how to use `.portalSource()`, `.portalDestination()`, and `.portalTransition()` with boolean state control.
+- **`PortalExample_StaticID`**
+  Demonstrates Portal's static ID system with a code block that transitions seamlessly across sheet boundaries. Features a clean interface with syntax-highlighted code snippets and a card-based overview of Portal's capabilities.
 
-- **`BasicNavigationExample`**
-  Shows portal transitions during navigation pushes using `NavigationView`. Demonstrates how Portal works across navigation boundaries where traditional `matchedGeometryEffect` cannot.
+- **`PortalExample_CardGrid`**
+  Shows the item-based Portal API with a grid of colorful cards that open to detailed sheet views. Demonstrates automatic ID management, type-safe item binding using `Identifiable` objects, and corner styling with `PortalCorners`.
 
-- **`MultiplePortalsExample`**
-  Illustrates managing multiple portal transitions within the same view hierarchy, each with unique IDs and configurations.
-
-#### iOS 17+ Enhanced Examples
-
-- **`ClipShapeExample`**
-  Demonstrates advanced corner styling and clipping effects using `PortalCorners` configuration.
-
-- **`ComparisonExample`**
-  Side-by-side comparison of Portal transitions vs. SwiftUI's built-in matched transitions, highlighting the differences in behavior and use cases.
-
-- **`CompletionCriteriaExample`**
-  Shows how to use iOS 17+ completion criteria for precise animation lifecycle control with `PortalAnimationWithCompletion`.
+- **`AnimatedLayer`**
+  A reusable component that provides visual feedback during portal transitions with scale animations. Used by the example views to enhance the transition experience with bounce effects.
 
 ---
 
 ### Key Example Patterns
 
-#### Basic Sheet Transition
+#### Static ID Transitions (Static ID Example)
 
 ```swift
-struct BasicSheetExample: View {
+struct PortalExample_StaticID: View {
     @State private var showDetail = false
     
     var body: some View {
         VStack {
-            RoundedRectangle(cornerRadius: 16)
-                .fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
-                .frame(width: 200, height: 120)
-                .portalSource(id: "heroCard")
+            // Code block with Portal source
+            CodeBlockView()
+                .portal(id: "codeBlock", .source)
                 .onTapGesture { showDetail.toggle() }
         }
         .sheet(isPresented: $showDetail) {
             DetailSheetView()
         }
         .portalTransition(
-            id: "heroCard",
+            id: "codeBlock",
             config: .init(animation: PortalAnimation(.spring(response: 0.4, dampingFraction: 0.8))),
             isActive: $showDetail
         ) {
-            RoundedRectangle(cornerRadius: 16)
-                .fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+            CodeBlockView()
         }
         .portalContainer()
     }
 }
 ```
 
-#### Data-Driven Transitions
+#### Item-Based Transitions (Card Grid Example)
 
 ```swift
-struct CardGridExample: View {
-    @State private var selectedCard: Card? = nil
-    let cards: [Card] = [...]
+struct PortalExample_CardGrid: View {
+    @State private var selectedCard: PortalExample_Card? = nil
+    let cards: [PortalExample_Card] = [...]
     
     var body: some View {
         LazyVGrid(columns: columns) {
             ForEach(cards) { card in
                 CardView(card: card)
-                    .portalSource(item: card)
+                    .portal(item: card, .source)
                     .onTapGesture { selectedCard = card }
             }
         }
         .sheet(item: $selectedCard) { card in
             CardDetailView(card: card)
         }
-        .portalTransition(item: $selectedCard) { card in
+        .portalTransition(
+            item: $selectedCard,
+            config: .init(
+                animation: PortalAnimation(.smooth(duration: 0.4, extraBounce: 0.1)),
+                corners: PortalCorners(source: 16, destination: 20, style: .continuous)
+            )
+        ) { card in
             CardView(card: card)
         }
         .portalContainer()
@@ -124,9 +118,8 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             List {
-                NavigationLink("Basic Sheet", destination: BasicSheetExample())
-                NavigationLink("Basic Navigation", destination: BasicNavigationExample())
-                NavigationLink("Multiple Portals", destination: MultiplePortalsExample())
+                NavigationLink("Portal vs matchedGeometryEffect", destination: PortalExample_StaticID())
+                NavigationLink("Card Grid with Items", destination: PortalExample_CardGrid())
             }
             .navigationTitle("Portal Examples")
         }
